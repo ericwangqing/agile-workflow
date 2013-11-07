@@ -3,17 +3,20 @@ require! ['./workflow-factory', './event-bus']
 workflow-store =
   retrieve-all-running-workflows: -> []
 
-print-event = !(e)->
+debug-event = !(e)->
   step-message = if e.step-name then " step: #{e.step-name}," else ""
   message = "#{e.name},#{step-message} workflow-state: #{e.wf-current-state}"
-  console.log message
+  debug message
 
 
 module.exports =
   workflows: []
   event-handler: (e)->
     # if e.name is 'workflow:creted'
-    print-event e if (e.name.index-of 'workflow') < 0
+    if (e.name.index-of 'workflow') >= 0
+      event-bus.emit e.name, e
+    else
+      # debug-event e 
 
   add: (workflow-def, resource)-> #
     @workflows.push workflow-factory.create-workflow workflow-def, resource, @event-handler
