@@ -6,33 +6,46 @@ module.exports = class Step
     _.extend @, _.pick step-def, 'name' # 注意！！！这里的深浅Copy问题
     @id = 's-' + utils.get-uuid!
     @state = 'pending'
-    @can-start = step-def.can-start
+    @can-act = step-def.can-act
     @can-end =step-def.can-end
     @act-times = 0
 
   set-next: (step)->
     @next = step
 
-  act: (condition-context, wf-callback)->
-    if @can-start condition-context
-      @act-times++
-      @state = 'executing'
-      wf-callback {name:'step:start', step-id: @id, step-name: @name}
-
-      (cc-after-act) <~! @actor.act @wf-id, @id
-      if @can-end cc-after-act
-        @state = 'done'
-        event = {name:'step:end', step-id: @id, step-name: @name}
-        if @next 
-          wf-callback event
-          @next.act cc-after-act, wf-callback
-        else
-          event.is-from-last-step = true 
-          wf-callback event
-      else
-        # still in this step
-        wf-callback {name:'step-acting', s-id: @id, times: @act-times}
+  act: !(condition-context, wf-callback)->
+    @wf-callback = wf-callback
+    if @can-act.apply condition-context
+      @_act!
     else
-      wf-callback {name:'step-can-not-start', s-id: @id}
+      @_callback-workflow name: 'step-can-not-act'
+
+  _act: !->
+    @act-times++
+    if @state in ['pending', 'done'] # 可多次执行 
+      @state = 'acting'
+      @_callback-workflow name:'step:start'
+    @__act!
+
+  __act: !->
+    (cc-after-act) <~! @actor.act @wf-id, @id
+    if @can-end.apply cc-after-act
+      @state = 'done'
+      @_act-next cc-after-act
+    else
+      # still in this step
+      @_callback-workflow name:'step-acting'
+
+  _act-next: !(cc-after-act)->
+    if @next 
+      @_callback-workflow name:'step:end' # 注意!!! 以下两步顺序不能变！
+      @next.act cc-after-act, @wf-callback
+    else
+      @_callback-workflow {name:'step:end' is-from-last-step: true}
+
+  _callback-workflow: !(data)->
+      @wf-callback {step-id: @id, step-name: @name} <<< data
+
+
 
 

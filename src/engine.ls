@@ -11,20 +11,13 @@ debug-event = !(e)->
 
 module.exports =
   workflows: []
-  event-handler: (e)->
-    # if e.name is 'workflow:creted'
-    if (e.name.index-of 'workflow') >= 0
-      event-bus.emit e.name, e
-    else
-      # debug-event e 
-
   add: (workflow-def, resource)-> #
-    @workflows.push workflow-factory.create-workflow workflow-def, resource, @event-handler
+    @workflows.push workflow-factory.create-workflow workflow-def, resource, @_event-handler
     @
 
   start: !->
     @workflows.concat workflow-store.retrieve-all-running-workflows!
-    [workflow.start! for workflow in @workflows]
+    [workflow.act! for workflow in @workflows]
     @
 
 
@@ -36,5 +29,13 @@ module.exports =
     for workflow in @workflows
       results.push workflow if query.apply workflow, null
     results
+
+  _event-handler: (e)->
+    # if e.name is 'workflow:creted'
+    if (e.name.index-of 'workflow') >= 0
+      event-bus.emit e.name, e
+    else
+      # debug-event e 
+
 
  
