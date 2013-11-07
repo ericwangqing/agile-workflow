@@ -2,7 +2,7 @@
   "name": "agile-workflow",
   "version": "0.0.1",
   "description": "a super agile workflow engine",
-  "main": "bin/aw.js",
+  "main": "bin/engine.js",
   "dependencies": {
     "async": "~0.2",
     "connect": "~2.8",
@@ -28,6 +28,9 @@
   "scripts": {
     "test": "mocha ./test-bin"
   },
-  "author": "WANG, Qing",
+  "author": {
+    "name": "WANG, Qing",
+    "email": "ericwangqing@gmail.com"
+  },
   "license": "BSD"
 }
