@@ -1,5 +1,5 @@
 {
-  "name": "agile-workflow",
+  "name": "agileworkflow",
   "version": "0.0.1",
   "description": "a super agile workflow engine",
   "main": "bin/engine.js",
