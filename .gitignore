@@ -1,0 +1,7 @@
+*.js
+bin/
+node_modules/
+test-bin/
+test-temp/
+src-temp/
+.DS_Store
