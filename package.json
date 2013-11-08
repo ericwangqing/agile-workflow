@@ -1,6 +1,6 @@
 {
   "name": "agileworkflow",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "a super agile workflow engine",
   "main": "bin/engine.js",
   "dependencies": {
