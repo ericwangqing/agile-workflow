@@ -35,7 +35,7 @@ module.exports =
     if (e.name.index-of 'workflow') >= 0
       event-bus.emit e.name, e
     else
-      # debug-event e 
+      debug-event e 
 
 
  

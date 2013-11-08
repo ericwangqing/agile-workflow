@@ -48,7 +48,9 @@
     _eventHandler: function(e){
       if (e.name.indexOf('workflow') >= 0) {
         return eventBus.emit(e.name, e);
-      } else {}
+      } else {
+        return debugEvent(e);
+      }
     }
   };
 }).call(this);
