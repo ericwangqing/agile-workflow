@@ -1,4 +1,5 @@
 require! ['./workflow-factory', './event-bus']
+_ = require 'underscore'
 
 workflow-store =
   retrieve-all-running-workflows: -> []
@@ -44,19 +45,30 @@ module.exports = class Engine
       next-sname: workflow.current-step.next?.name
     }, callback
 
-  human-act-step: !({wfid, sid, sname, next-sid, next-sname}, callback)~>
-    debug "human-act-step at: #{sname}"
-    if next-sid # 不是最后step
-      debug "register once on: workflow:waiting-human-on:#{wfid}/#{next-sid} ", next-sname
-      event-bus.once "workflow:waiting-human-on:#{wfid}/#{next-sid}", !(data)-> 
+  human-act-step: !({wfid, sid}, callback)~>
+    step = @get-step wfid, sid
+    debug "human-act-step at: #{step.name}"
+    if step.next # 不是最后step
+      debug "register once on: workflow:waiting-human-on:#{wfid}/#{step.next.id} ", step.next.name
+      event-bus.once "workflow:waiting-human-on:#{wfid}/#{step.next.id}", !(data)-> 
         callback error = null, data if callback 
-    debug "emit: wf://#{wfid}/#{sid}/done ", sname
+    else #是最后一步
+      debug "register once on: workflow:end:#{wfid} "
+      event-bus.once "workflow:end:#{wfid}", !(data)->
+        callback error = null, data if callback
+
+    debug "emit: wf://#{wfid}/#{sid}/done ", step.name
     event-bus.emit "wf://#{wfid}/#{sid}/done", cc-after-act = {} # 这里需要改进，判断是否处在正确的sid上，和可执行条件
+
+  get-step: (wfid, sid)->
+    workflow = @get-workflow-by-id wfid
+    for step in _.values workflow.steps
+      return step if step.id is sid
 
   get-all-running-workflow: ->
     @query-workflow -> true
 
-  get-workflow-by-id: (id)->
+  get-workflow-by-id: (wid)->
     workflows = @query-workflow -> @.id is wid
     workflows[0]
 

@@ -29,7 +29,7 @@ describe '工作流引擎基本测试', ->
     engine := new Engine store = null, config = debug: workflow: true
 
     # workflow = engine.execute wfd, resource = null, (error, data)->
-    #   workflow.act!
+      # workflow.act!
 
     debug '--------------- before human-execute --------------'
     engine.human-execute wfd, resource = null, (error, data)->
@@ -37,9 +37,6 @@ describe '工作流引擎基本测试', ->
       debug '--------------- before human-act-step 1 --------------'
       engine.human-act-step {wfid: data.wfid, sid: data.next-act.id, sname: data.next-act.name}, (error, data)->
         debug '--------------- after human-act-step 1 --------------'
-        debug '--------------- before human-act-step 2 --------------'
-        engine.human-act-step {wfid: data.wfid, sid: data.next-act.id, sname: data.next-act.name}, (error, data)->
-          debug '--------------- after human-act-step 2 --------------'
       # console.log "engine, aw:start-workflow, "
 
     # human-actor-complete-step 'assignment'

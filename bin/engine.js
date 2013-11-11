@@ -1,8 +1,9 @@
 (function(){
-  var debug, workflowFactory, eventBus, workflowStore, debugEvent, Engine;
+  var debug, workflowFactory, eventBus, _, workflowStore, debugEvent, Engine;
   debug = require('debug')('aw');
   workflowFactory = require('./workflow-factory');
   eventBus = require('./event-bus');
+  _ = require('underscore');
   workflowStore = {
     retrieveAllRunningWorkflows: function(){
       return [];
@@ -67,27 +68,46 @@
       }, callback);
     };
     prototype.humanActStep = function(arg$, callback){
-      var wfid, sid, sname, nextSid, nextSname, ccAfterAct;
-      wfid = arg$.wfid, sid = arg$.sid, sname = arg$.sname, nextSid = arg$.nextSid, nextSname = arg$.nextSname;
-      debug("human-act-step at: " + sname);
-      if (nextSid) {
-        debug("register once on: workflow:waiting-human-on:" + wfid + "/" + nextSid + " ", nextSname);
-        eventBus.once("workflow:waiting-human-on:" + wfid + "/" + nextSid, function(data){
+      var wfid, sid, step, ccAfterAct;
+      wfid = arg$.wfid, sid = arg$.sid;
+      step = this.getStep(wfid, sid);
+      debug("human-act-step at: " + step.name);
+      if (step.next) {
+        debug("register once on: workflow:waiting-human-on:" + wfid + "/" + step.next.id + " ", step.next.name);
+        eventBus.once("workflow:waiting-human-on:" + wfid + "/" + step.next.id, function(data){
+          var error;
+          if (callback) {
+            callback(error = null, data);
+          }
+        });
+      } else {
+        debug("register once on: workflow:end:" + wfid + " ");
+        eventBus.once("workflow:end:" + wfid, function(data){
           var error;
           if (callback) {
             callback(error = null, data);
           }
         });
       }
-      debug("emit: wf://" + wfid + "/" + sid + "/done ", sname);
+      debug("emit: wf://" + wfid + "/" + sid + "/done ", step.name);
       eventBus.emit("wf://" + wfid + "/" + sid + "/done", ccAfterAct = {});
+    };
+    prototype.getStep = function(wfid, sid){
+      var workflow, i$, ref$, len$, step;
+      workflow = this.getWorkflowById(wfid);
+      for (i$ = 0, len$ = (ref$ = _.values(workflow.steps)).length; i$ < len$; ++i$) {
+        step = ref$[i$];
+        if (step.id === sid) {
+          return step;
+        }
+      }
     };
     prototype.getAllRunningWorkflow = function(){
       return this.queryWorkflow(function(){
         return true;
       });
     };
-    prototype.getWorkflowById = function(id){
+    prototype.getWorkflowById = function(wid){
       var workflows;
       workflows = this.queryWorkflow(function(){
         return this.id === wid;
