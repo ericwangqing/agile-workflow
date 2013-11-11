@@ -1,4 +1,4 @@
-require! ['./Workflow', './Step', './Actor', './utils']
+require! ['./Workflow', './Step', './Actor-factory', './utils']
 
 create-steps = (wid, wf-def, resource)->
   steps = create-unwired-steps wid, wf-def, resource
@@ -8,7 +8,8 @@ create-steps = (wid, wf-def, resource)->
 create-unwired-steps = (wid, wf-def, resource)->
   steps = {}
   for step-def in wf-def.steps
-    steps[step-def.name] = new Step wid, get-actor!, step-def
+    actor = get-actor step-def.actor, resource
+    steps[step-def.name] = new Step wid, actor, step-def
   steps
 
 wire-steps = (steps, wf-def)->
@@ -18,8 +19,8 @@ wire-steps = (steps, wf-def)->
     start-step = step if step-def.is-start
   start-step
 
-get-actor = (resource)-> #下一步变成resource def
-  new Actor!
+get-actor = (type, resource)-> #下一步变成resource def
+  Actor-factory.create-actor (type or 'human') #目前默认human
 
 module.exports = 
   create-workflow: (wf-def, resource, engine-callback)->

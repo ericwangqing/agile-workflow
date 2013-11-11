@@ -5,24 +5,60 @@ workflow-store =
 
 debug-event = !(e)->
   step-message = if e.step-name then " step: #{e.step-name}," else ""
-  message = "#{e.name},#{step-message} workflow-state: #{e.wf-current-state}"
+  message = "#{e.name},#{step-message} workflow-state: #{e.state}"
   debug message
 
 
-module.exports =
-  workflows: []
-  add: (workflow-def, resource)-> #
-    @workflows.push workflow-factory.create-workflow workflow-def, resource, @_event-handler
-    @
+module.exports = class Engine
+  (@store, config) ->
+    self = @
+    @workflows = (@store or workflow-store).retrieve-all-running-workflows!
+    @config = if config then config else @_load-config!
+    # @event-bus = event-bus
 
-  start: !->
-    @workflows.concat workflow-store.retrieve-all-running-workflows!
+  start: !(cfg)->
     [workflow.act! for workflow in @workflows]
     @
 
+  add: (workflow-def, resource)-> #
+    workflow = workflow-factory.create-workflow workflow-def, resource, @_event-handler
+    @workflows.push workflow
+    workflow.initial! # 初始化！
+
+  execute: !(workflow-def, resource, callback)-> 
+    # debug "engine execute wf with callback: ", callback
+    workflow = @add workflow-def, resource
+    event-bus.once "workflow:start:#{workflow.id}", !(data)->
+      # debug "getoeeee!"
+      callback error = null, data if callback 
+    workflow.act!
+
+  human-execute: !(workflow-def, resource, callback)~> 
+    workflow = @add workflow-def, resource
+    workflow.act!
+    @human-act-step {
+      wfid: workflow.id,
+      sid: workflow.current-step.id
+      sname: workflow.current-step.name
+      next-sid: workflow.current-step.next?.id
+      next-sname: workflow.current-step.next?.name
+    }, callback
+
+  human-act-step: !({wfid, sid, sname, next-sid, next-sname}, callback)~>
+    debug "human-act-step at: #{sname}"
+    if next-sid # 不是最后step
+      debug "register once on: workflow:waiting-human-on:#{wfid}/#{next-sid} ", next-sname
+      event-bus.once "workflow:waiting-human-on:#{wfid}/#{next-sid}", !(data)-> 
+        callback error = null, data if callback 
+    debug "emit: wf://#{wfid}/#{sid}/done ", sname
+    event-bus.emit "wf://#{wfid}/#{sid}/done", cc-after-act = {} # 这里需要改进，判断是否处在正确的sid上，和可执行条件
 
   get-all-running-workflow: ->
     @query-workflow -> true
+
+  get-workflow-by-id: (id)->
+    workflows = @query-workflow -> @.id is wid
+    workflows[0]
 
   query-workflow: (query)->
     results = []
@@ -30,12 +66,17 @@ module.exports =
       results.push workflow if query.apply workflow, null
     results
 
-  _event-handler: (e)->
+  _load-config: ->
+    # load engine config
+    {}
+
+  _event-handler: (e)~>
     # if e.name is 'workflow:creted'
     if (e.name.index-of 'workflow') >= 0
+      debug-event e if @config?.debug.workflow is true
       event-bus.emit e.name, e
     else
-      debug-event e 
+      debug-event e if @config?.debug.step is true
 
 
  

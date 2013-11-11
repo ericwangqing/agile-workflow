@@ -9,7 +9,7 @@
     function Step(wfId, actor, stepDef){
       this.wfId = wfId;
       this.actor = actor;
-      _.extend(this, _.pick(stepDef, 'name'));
+      _.extend(this, _.pick(stepDef, 'name', 'is-start'));
       this.id = 's-' + utils.getUuid();
       this.state = 'pending';
       this.canAct = stepDef.canAct;
@@ -20,7 +20,9 @@
       return this.next = step;
     };
     prototype.act = function(conditionContext, wfCallback){
-      this.wfCallback = wfCallback;
+      if (wfCallback) {
+        this.wfCallback = wfCallback;
+      }
       if (this.canAct.apply(conditionContext)) {
         this._act();
       } else {
@@ -48,7 +50,8 @@
           this$._actNext(ccAfterAct);
         } else {
           this$._callbackWorkflow({
-            name: 'step-acting'
+            name: 'step:acting',
+            times: this$.actTimes
           });
         }
       });
@@ -56,9 +59,9 @@
     prototype._actNext = function(ccAfterAct){
       if (this.next) {
         this._callbackWorkflow({
-          name: 'step:end'
+          name: 'step:end',
+          conditionContext: ccAfterAct
         });
-        this.next.act(ccAfterAct, this.wfCallback);
       } else {
         this._callbackWorkflow({
           name: 'step:end',
@@ -68,8 +71,7 @@
     };
     prototype._callbackWorkflow = function(data){
       this.wfCallback(import$({
-        stepId: this.id,
-        stepName: this.name
+        step: _.pick(this, 'id', 'name')
       }, data));
     };
     return Step;

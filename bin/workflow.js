@@ -13,12 +13,20 @@
       this.engineCallback = engineCallback;
       this.stepEventHandler = bind$(this, 'stepEventHandler', prototype);
       this.state = 'pending';
+      this.currentStep = null;
       this._callbackEngine({
-        name: 'workflow:created'
+        name: "workflow:created:" + this.id
       });
     }
+    prototype.initial = function(){
+      return this;
+    };
     prototype.act = function(){
-      this.startStep.act(this.startConditionContext, this.stepEventHandler);
+      if (this.currentStep === null) {
+        this.currentStep = this.startStep;
+      }
+      this.currentStep.act(this.startConditionContext, this.stepEventHandler);
+      return this;
     };
     prototype.getStepIdByName = function(name){
       return this.steps[name].id;
@@ -31,20 +39,40 @@
       if (event.name === 'step:start' && this.state === 'pending') {
         this.state = 'start';
         this._callbackEngine({
-          name: 'workflow:start'
+          name: "workflow:start:" + this.id,
+          nextAct: this.currentStep
         });
       }
-      if (event.isFromLastStep && event.name === 'step:end') {
-        this.state = 'end';
+      if (event.name === 'step:acting') {
         this._callbackEngine({
-          name: 'workflow:end'
+          name: "workflow:acted-on:" + this.id + "/" + this.currentStep.id,
+          nextAct: this.currentStep
         });
+      }
+      if (event.name === 'step:end') {
+        this._callbackEngine({
+          name: "workflow:acted-on:" + this.id + "/" + this.currentStep.id,
+          nextAct: this.currentStep.next
+        });
+        if (event.isFromLastStep) {
+          this.state = 'end';
+          this._callbackEngine({
+            name: "workflow:end:" + this.id
+          });
+        } else {
+          this.currentStep = this.currentStep.next;
+          this.currentStep.act(event.conditionContext, this.stepEventHandler);
+          this._callbackEngine({
+            name: "workflow:waiting-human-on:" + this.id + "/" + this.currentStep.id,
+            nextAct: this.currentStep
+          });
+        }
       }
     };
     prototype._callbackEngine = function(data){
       this.engineCallback(import$({
-        wfId: this.id,
-        wfCurrentState: this.state
+        wfid: this.id,
+        state: this.state
       }, data));
     };
     return Workflow;

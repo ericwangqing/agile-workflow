@@ -1,9 +1,9 @@
 (function(){
-  var debug, Workflow, Step, Actor, utils, createSteps, createUnwiredSteps, wireSteps, getActor;
+  var debug, Workflow, Step, ActorFactory, utils, createSteps, createUnwiredSteps, wireSteps, getActor;
   debug = require('debug')('aw');
   Workflow = require('./Workflow');
   Step = require('./Step');
-  Actor = require('./Actor');
+  ActorFactory = require('./Actor-factory');
   utils = require('./utils');
   createSteps = function(wid, wfDef, resource){
     var steps, startStep;
@@ -12,11 +12,12 @@
     return [steps, startStep];
   };
   createUnwiredSteps = function(wid, wfDef, resource){
-    var steps, i$, ref$, len$, stepDef;
+    var steps, i$, ref$, len$, stepDef, actor;
     steps = {};
     for (i$ = 0, len$ = (ref$ = wfDef.steps).length; i$ < len$; ++i$) {
       stepDef = ref$[i$];
-      steps[stepDef.name] = new Step(wid, getActor(), stepDef);
+      actor = getActor(stepDef.actor, resource);
+      steps[stepDef.name] = new Step(wid, actor, stepDef);
     }
     return steps;
   };
@@ -32,8 +33,8 @@
     }
     return startStep;
   };
-  getActor = function(resource){
-    return new Actor();
+  getActor = function(type, resource){
+    return ActorFactory.createActor(type || 'human');
   };
   module.exports = {
     createWorkflow: function(wfDef, resource, engineCallback){
