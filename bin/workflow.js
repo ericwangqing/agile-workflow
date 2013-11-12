@@ -1,85 +1,28 @@
 (function(){
-  var debug, Step, Workflow;
+  var debug, Step, _, Workflow;
   debug = require('debug')('aw');
   Step = require('./Step');
+  _ = require('underscore');
   module.exports = Workflow = (function(superclass){
     var prototype = extend$((import$(Workflow, superclass).displayName = 'Workflow', Workflow), superclass).prototype, constructor = Workflow;
-    function Workflow(id, name, steps, startStep, startConditionContext, engineCallback){
-      this.id = id;
-      this.name = name;
-      this.steps = steps;
-      this.startStep = startStep;
-      this.startConditionContext = startConditionContext;
-      this.engineCallback = engineCallback;
-      this.stepEventHandler = bind$(this, 'stepEventHandler', prototype);
+    function Workflow(arg$){
+      this.id = arg$.id, this.name = arg$.name, this.steps = arg$.steps, this.activeSteps = arg$.activeSteps, this.context = arg$.context, this.engineCallback = arg$.engineCallback;
       this.state = 'pending';
-      this.currentStep = null;
-      this._callbackEngine({
-        name: "workflow:created:" + this.id
-      });
     }
-    prototype.initial = function(){
-      return this;
-    };
-    prototype.act = function(){
-      if (this.currentStep === null) {
-        this.currentStep = this.startStep;
-      }
-      this.currentStep.act(this.startConditionContext, this.stepEventHandler);
-      return this;
-    };
-    prototype.getStepIdByName = function(name){
-      return this.steps[name].id;
-    };
-    prototype.stepEventHandler = function(event){
-      this._callbackEngine(event);
-      this.translateToAndHandleWorkflowEvent(event);
-    };
-    prototype.translateToAndHandleWorkflowEvent = function(event){
-      if (event.name === 'step:start' && this.state === 'pending') {
-        this.state = 'start';
-        this._callbackEngine({
-          name: "workflow:start:" + this.id,
-          nextAct: this.currentStep
-        });
-      }
-      if (event.name === 'step:acting') {
-        this._callbackEngine({
-          name: "workflow:acted-on:" + this.id + "/" + this.currentStep.id,
-          nextAct: this.currentStep
-        });
-      }
-      if (event.name === 'step:end') {
-        this._callbackEngine({
-          name: "workflow:acted-on:" + this.id + "/" + this.currentStep.id,
-          nextAct: this.currentStep.next
-        });
-        if (event.isFromLastStep) {
-          this.state = 'end';
-          this._callbackEngine({
-            name: "workflow:end:" + this.id
-          });
-        } else {
-          this.currentStep = this.currentStep.next;
-          this.currentStep.act(event.conditionContext, this.stepEventHandler);
-          this._callbackEngine({
-            name: "workflow:waiting-human-on:" + this.id + "/" + this.currentStep.id,
-            nextAct: this.currentStep
-          });
+    prototype.toString = function(){
+      var stepsStrs, step;
+      stepsStrs = '\n\t' + (function(){
+        var i$, ref$, len$, results$ = [];
+        for (i$ = 0, len$ = (ref$ = _.values(this.steps)).length; i$ < len$; ++i$) {
+          step = ref$[i$];
+          results$.push('' + step);
         }
-      }
-    };
-    prototype._callbackEngine = function(data){
-      this.engineCallback(import$({
-        wfid: this.id,
-        state: this.state
-      }, data));
+        return results$;
+      }.call(this)).join('\n\t') + '\n';
+      return "Workflow: '" + this.name + "', id: " + this.id + ", Steps: " + stepsStrs;
     };
     return Workflow;
   }(Step));
-  function bind$(obj, key, target){
-    return function(){ return (target || obj)[key].apply(obj, arguments) };
-  }
   function extend$(sub, sup){
     function fun(){} fun.prototype = (sub.superclass = sup).prototype;
     (sub.prototype = new fun).constructor = sub;

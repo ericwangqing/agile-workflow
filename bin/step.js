@@ -6,79 +6,78 @@
   module.exports = Step = (function(){
     Step.displayName = 'Step';
     var prototype = Step.prototype, constructor = Step;
-    function Step(wfId, actor, stepDef){
-      this.wfId = wfId;
-      this.actor = actor;
+    function Step(arg$){
+      var stepDef;
+      this.actor = arg$.actor, this.context = arg$.context, stepDef = arg$.stepDef;
       _.extend(this, _.pick(stepDef, 'name', 'is-start'));
-      this.id = 's-' + utils.getUuid();
       this.state = 'pending';
       this.canAct = stepDef.canAct;
       this.canEnd = stepDef.canEnd;
       this.actTimes = 0;
+      this.isWaitingDefer = false;
     }
-    prototype.setNext = function(step){
-      return this.next = step;
+    prototype.setNext = function(next){
+      this.next = next;
     };
-    prototype.act = function(conditionContext, wfCallback){
-      if (wfCallback) {
-        this.wfCallback = wfCallback;
-      }
-      if (this.canAct.apply(conditionContext)) {
-        this._act();
+    prototype.setWorkflow = function(workflow){
+      this.workflow = workflow;
+    };
+    prototype.act = function(){
+      debug("act on step: " + this.name);
+      if (this.canAct.apply(context)) {
+        return this._act();
       } else {
-        this._callbackWorkflow({
-          name: 'step-can-not-act'
-        });
+        throw new Error("Can't act on step: " + this.name);
+      }
+    };
+    prototype.deferAct = function(){
+      debug("defer act on step: " + this.name);
+      if (this.isWaitingDefer) {
+        this.actTimes++;
+        return this.___act();
+      } else {
+        return debug("Can't defer-act on when not wait-defer");
       }
     };
     prototype._act = function(){
       var ref$;
-      this.actTimes++;
       if ((ref$ = this.state) === 'pending' || ref$ === 'done') {
         this.state = 'acting';
-        this._callbackWorkflow({
-          name: 'step:start'
-        });
       }
-      this.__act();
+      return this.__act();
     };
     prototype.__act = function(){
-      var this$ = this;
-      this.actor.act(this.wfId, this.id, function(ccAfterAct){
-        if (this$.canEnd.apply(ccAfterAct)) {
-          this$.state = 'done';
-          this$._actNext(ccAfterAct);
-        } else {
-          this$._callbackWorkflow({
-            name: 'step:acting',
-            times: this$.actTimes
-          });
-        }
-      });
-    };
-    prototype._actNext = function(ccAfterAct){
-      if (this.next) {
-        this._callbackWorkflow({
-          name: 'step:end',
-          conditionContext: ccAfterAct
-        });
+      var isDefer;
+      isDefer = this.actor.act(this.wfId, this.id, this.context);
+      if (!isDefer) {
+        this.actTimes++;
+        return this.___act();
       } else {
-        this._callbackWorkflow({
-          name: 'step:end',
-          isFromLastStep: true
-        });
+        this.isWaitingDefer = true;
+        return this;
       }
     };
-    prototype._callbackWorkflow = function(data){
-      this.wfCallback(import$({
-        step: _.pick(this, 'id', 'name')
-      }, data));
+    prototype.___act = function(){
+      if (this.canEnd.apply(this.context)) {
+        this.state = 'done';
+        this.workflow.activeSteps = _.without(this.workflow.activeSteps, this);
+        return this._actNext();
+      } else {
+        debug("Still in step: " + this.name + ", act times: " + this.actTimes);
+        return this.act();
+      }
+    };
+    prototype._actNext = function(){
+      if (this.next) {
+        this.workflow.activeSteps.push(this.next);
+        return this.next.act();
+      } else {
+        return this.workflow.state = 'end';
+      }
+    };
+    prototype.toString = function(){
+      return ("Step: '" + this.name + "', state: " + this.state + ", act-times: " + this.actTimes) + (this.isWaitingDefer ? ', is-waiting-defer.' : '.');
     };
     return Step;
   }());
-  function import$(obj, src){
-    var own = {}.hasOwnProperty;
-    for (var key in src) if (own.call(src, key)) obj[key] = src[key];
-    return obj;
-  }
 }).call(this);

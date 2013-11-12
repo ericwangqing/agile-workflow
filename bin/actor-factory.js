@@ -13,11 +13,12 @@
   HumanActor = (function(){
     HumanActor.displayName = 'HumanActor';
     var prototype = HumanActor.prototype, constructor = HumanActor;
-    prototype.act = function(wfId, sId, done){
-      return this._waitHumanWork(wfId, sId, done);
+    prototype.act = function(wfId, sId, context){
+      return this._waitHumanWork(wfId, sId, context);
     };
-    prototype._waitHumanWork = function(wfId, sId, done){
-      return eventBus.once("wf://" + wfId + "/" + sId + "/done", done);
+    prototype._waitHumanWork = function(wfId, sId, context){
+      var isDefer;
+      return isDefer = true;
     };
     function HumanActor(){}
     return HumanActor;
@@ -25,11 +26,12 @@
   AutoActor = (function(){
     AutoActor.displayName = 'AutoActor';
     var prototype = AutoActor.prototype, constructor = AutoActor;
-    prototype.act = function(wfId, sId, done){
-      return this._callAutoTask(wfId, sId, done);
+    prototype.act = function(wfId, sId, context){
+      return this._callAutoTask(wfId, sId, context);
     };
-    prototype._callAutoTask = function(wfId, sId, done){
-      return done();
+    prototype._callAutoTask = function(wfId, sId, context){
+      var isDefer;
+      return isDefer = false;
     };
     function AutoActor(){}
     return AutoActor;

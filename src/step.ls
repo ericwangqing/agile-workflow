@@ -2,51 +2,70 @@ require! './utils'
 _ = require 'underscore'
 
 module.exports = class Step
-  (@wf-id, @actor, step-def)->
+  ({@actor, @context, step-def})->
+    # step的name在workflow中是唯一的，所以不用id了
     _.extend @, _.pick step-def, 'name', 'is-start' # 注意！！！这里的深浅Copy问题
-    @id = 's-' + utils.get-uuid!
     @state = 'pending'
     @can-act = step-def.can-act
     @can-end =step-def.can-end
     @act-times = 0
+    @is-waiting-defer = false
 
-  set-next: (step)->
-    @next = step
 
-  act: !(condition-context, wf-callback)->
-    @wf-callback = wf-callback if wf-callback
-    if @can-act.apply condition-context
+  set-next: (@next)->
+
+  set-workflow: (@workflow)->
+
+  act: ->
+    debug "act on step: #{@name}"
+    if @can-act.apply context
       @_act!
     else
-      @_callback-workflow name: 'step-can-not-act'
+      throw new Error "Can't act on step: #{@name}"
 
-  _act: !->
-    @act-times++
+  defer-act: ->
+    debug "defer act on step: #{@name}"
+    if @is-waiting-defer
+      @act-times++
+      @___act!
+    else  
+      debug "Can't defer-act on when not wait-defer"
+
+  _act: ->
     if @state in ['pending', 'done'] # 可多次执行 
       @state = 'acting'
-      @_callback-workflow name:'step:start'
+      # @_callback-workflow name:'step:start'
     @__act!
 
-  __act: !->
-    (cc-after-act) <~! @actor.act @wf-id, @id
+  __act: ->
+    is-defer = @actor.act @wf-id, @id, @context
+    if not is-defer
+      @act-times++
+      @___act!
+    else
+      @is-waiting-defer = true
+      @
+
+  ___act: ->
     # debug "******** Actor callback at step: #{@name}"
-    if @can-end.apply cc-after-act
+    if @can-end.apply @context
       @state = 'done'
-      @_act-next cc-after-act
+      @workflow.active-steps = _.without @workflow.active-steps, @
+      @_act-next!
     else
       # still in this step
-      @_callback-workflow {name:'step:acting', times: @act-times}
+      debug "Still in step: #{@name}, act times: #{@act-times}"
+      @act!
 
-  _act-next: !(cc-after-act)->
+  _act-next: ->
     if @next 
-      @_callback-workflow {name:'step:end', condition-context: cc-after-act} # 注意!!! 以下两步顺序不能变！
-      # @next.act cc-after-act, @wf-callback
+      @workflow.active-steps.push @next
+      @next.act!
     else
-      @_callback-workflow {name:'step:end' is-from-last-step: true}
+      @workflow.state = 'end'
 
-  _callback-workflow: !(data)->
-      @wf-callback {step: (_.pick @, 'id', 'name')} <<< data
-
+  to-string: ->
+    "Step: '#{@name}', state: #{@state}, act-times: #{@act-times}" + if @is-waiting-defer then ', is-waiting-defer.' else '.'
 
 
 
