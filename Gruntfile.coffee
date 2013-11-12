@@ -5,7 +5,7 @@
   2）在新窗口 grunt test
 '''
 module.exports = (grunt)->
-  process.env.DEBUG = 'aw'
+  # process.env.DEBUG = 'aw'
   grunt.initConfig
     clean: ["bin", 'src-temp', 'test-temp', 'test-bin']
     copy:

@@ -21,8 +21,7 @@ module.exports = class Engine
 
   human-act-step: (wfid, step-name, human-act-result)->
     step = @get-step wfid, step-name
-    step.context <<< human-act-result
-    next-act = step.defer-act!
+    next-act = step.defer-act human-act-result
 
   get-step: (wfid, step-name)->
     workflow = @get-workflow-by-id wfid

@@ -1,5 +1,5 @@
 (function(){
-  var debug, Workflow, Step, ActorFactory, utils, _, createSteps, createUnwiredSteps, wireSteps, getActor;
+  var debug, Workflow, Step, ActorFactory, utils, _, createSteps, createUnwiredSteps, wireStepsAndInitialActive, getActor;
   debug = require('debug')('aw');
   Workflow = require('./Workflow');
   Step = require('./Step');
@@ -9,7 +9,7 @@
   createSteps = function(wfDef, resource){
     var steps, activeSteps;
     steps = createUnwiredSteps(wfDef, resource);
-    activeSteps = wireSteps(steps, wfDef);
+    activeSteps = wireStepsAndInitialActive(steps, wfDef);
     return {
       steps: steps,
       activeSteps: activeSteps
@@ -18,7 +18,7 @@
   createUnwiredSteps = function(wfDef, resource){
     var steps, context, i$, ref$, len$, stepDef, actor;
     steps = {};
-    context = utils.deepCopy(wfDef.context);
+    context = _.extend({}, wfDef.context);
     for (i$ = 0, len$ = (ref$ = wfDef.steps).length; i$ < len$; ++i$) {
       stepDef = ref$[i$];
       actor = getActor(stepDef.actor, resource);
@@ -30,7 +30,7 @@
     }
     return steps;
   };
-  wireSteps = function(steps, wfDef){
+  wireStepsAndInitialActive = function(steps, wfDef){
     var activeSteps, i$, ref$, len$, stepDef, step;
     activeSteps = [];
     for (i$ = 0, len$ = (ref$ = wfDef.steps).length; i$ < len$; ++i$) {
@@ -38,6 +38,7 @@
       step = steps[stepDef.name];
       step.setNext(steps[stepDef.next]);
       if (stepDef.isStartActive) {
+        step.state = 'active';
         activeSteps.push(step);
       }
     }

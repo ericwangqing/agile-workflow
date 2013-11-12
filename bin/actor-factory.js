@@ -13,27 +13,17 @@
   HumanActor = (function(){
     HumanActor.displayName = 'HumanActor';
     var prototype = HumanActor.prototype, constructor = HumanActor;
-    prototype.act = function(wfId, sId, context){
-      return this._waitHumanWork(wfId, sId, context);
-    };
-    prototype._waitHumanWork = function(wfId, sId, context){
-      var isDefer;
-      return isDefer = true;
-    };
-    function HumanActor(){}
+    function HumanActor(){
+      this.isDefer = true;
+    }
     return HumanActor;
   }());
   AutoActor = (function(){
     AutoActor.displayName = 'AutoActor';
     var prototype = AutoActor.prototype, constructor = AutoActor;
-    prototype.act = function(wfId, sId, context){
-      return this._callAutoTask(wfId, sId, context);
-    };
-    prototype._callAutoTask = function(wfId, sId, context){
-      var isDefer;
-      return isDefer = false;
-    };
-    function AutoActor(){}
+    function AutoActor(){
+      this.isDefer = false;
+    }
     return AutoActor;
   }());
   module.exports = ActorFactory = {

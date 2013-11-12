@@ -3,23 +3,25 @@ _ = require 'underscore'
 
 create-steps = (wf-def, resource)->
   steps = create-unwired-steps wf-def, resource
-  active-steps = wire-steps steps, wf-def
+  active-steps = wire-steps-and-initial-active steps, wf-def
   {steps, active-steps}
 
 create-unwired-steps = (wf-def, resource)->
   steps = {}
-  context = utils.deep-copy wf-def.context
+  context = _.extend {},  wf-def.context
   for step-def in wf-def.steps
     actor = get-actor step-def.actor, resource
     steps[step-def.name] = new Step {actor, context: context, step-def}
   steps
 
-wire-steps = (steps, wf-def)->
+wire-steps-and-initial-active = (steps, wf-def)->
   active-steps = []
   for step-def in wf-def.steps
     step = steps[step-def.name]
     step.set-next steps[step-def.next]
-    active-steps.push step if step-def.is-start-active
+    if step-def.is-start-active
+      step.state = 'active'
+      active-steps.push step 
   active-steps
 
 get-actor = (type, resource)-> #下一步变成resource def

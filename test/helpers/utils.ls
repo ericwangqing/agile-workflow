@@ -24,6 +24,8 @@ class All-done-waiter
 
 #------------------- Utility Functions ------------------#
 
+unpack-all-functions = (util-obj)->
+
 load-fixture = (data-name)->
   eval require('fs').readFileSync(FIXTURE_PATH + data-name + '.js', {encoding: 'utf-8'}) 
 

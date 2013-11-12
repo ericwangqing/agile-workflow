@@ -11,8 +11,12 @@
       this.actor = arg$.actor, this.context = arg$.context, stepDef = arg$.stepDef;
       _.extend(this, _.pick(stepDef, 'name', 'is-start'));
       this.state = 'pending';
-      this.canAct = stepDef.canAct;
-      this.canEnd = stepDef.canEnd;
+      this.canAct = stepDef.canAct || function(){
+        return true;
+      };
+      this.canEnd = stepDef.canEnd || function(){
+        return true;
+      };
       this.actTimes = 0;
       this.isWaitingDefer = false;
     }
@@ -22,42 +26,49 @@
     prototype.setWorkflow = function(workflow){
       this.workflow = workflow;
     };
-    prototype.act = function(){
-      debug("act on step: " + this.name);
-      if (this.canAct.apply(context)) {
-        return this._act();
-      } else {
-        throw new Error("Can't act on step: " + this.name);
+    prototype.checkActable = function(){
+      var ref$;
+      if (this.workflow.state === 'ended') {
+        throw new Error("Can't act on ended workflow");
+      }
+      if (!((ref$ = this.state) === 'active' || ref$ === 'acting')) {
+        throw new Error("Can't act on inactive step: " + this.name);
       }
     };
-    prototype.deferAct = function(){
-      debug("defer act on step: " + this.name);
-      if (this.isWaitingDefer) {
-        this.actTimes++;
-        return this.___act();
+    prototype.act = function(){
+      this.checkActable();
+      if (this.actor.isDefer) {
+        debug("wait on defer act: " + this.name);
+        return this.isWaitingDefer = true;
+      } else if (this.canAct.apply(this.context)) {
+        return this._act();
       } else {
-        return debug("Can't defer-act on when not wait-defer");
+        return debug("Can't act on step: " + this.name + ", state: " + this.state);
+      }
+    };
+    prototype.deferAct = function(humanActResult){
+      var canAct;
+      this.checkActable();
+      debug("defer act on step: " + this.name);
+      this.context = _.extend(this.context, humanActResult);
+      if (this.isWaitingDefer && (canAct = this.canAct.apply(this.context))) {
+        this.isWaitingDefer = false;
+        return this._act();
+      } else {
+        return debug("Can't defer-act. is-waiting-defer: " + isWaitingDefer + ", can-act: " + canAct + " ");
       }
     };
     prototype._act = function(){
       var ref$;
-      if ((ref$ = this.state) === 'pending' || ref$ === 'done') {
+      debug("act on step: " + this.name);
+      this.workflow.state = 'started';
+      this.actTimes++;
+      if ((ref$ = this.state) === 'pending' || ref$ === 'active' || ref$ === 'done') {
         this.state = 'acting';
       }
       return this.__act();
     };
     prototype.__act = function(){
-      var isDefer;
-      isDefer = this.actor.act(this.wfId, this.id, this.context);
-      if (!isDefer) {
-        this.actTimes++;
-        return this.___act();
-      } else {
-        this.isWaitingDefer = true;
-        return this;
-      }
-    };
-    prototype.___act = function(){
       if (this.canEnd.apply(this.context)) {
         this.state = 'done';
         this.workflow.activeSteps = _.without(this.workflow.activeSteps, this);
@@ -69,10 +80,12 @@
     };
     prototype._actNext = function(){
       if (this.next) {
+        this.next.state = 'active';
         this.workflow.activeSteps.push(this.next);
+        this.workflow.activeSteps = _.uniq(this.workflow.activeSteps);
         return this.next.act();
       } else {
-        return this.workflow.state = 'end';
+        return this.workflow.state = 'ended';
       }
     };
     prototype.toString = function(){

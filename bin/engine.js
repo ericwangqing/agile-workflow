@@ -34,8 +34,7 @@
     prototype.humanActStep = function(wfid, stepName, humanActResult){
       var step, nextAct;
       step = this.getStep(wfid, stepName);
-      import$(step.context, humanActResult);
-      return nextAct = step.deferAct();
+      return nextAct = step.deferAct(humanActResult);
     };
     prototype.getStep = function(wfid, stepName){
       var workflow, i$, ref$, len$, step;
@@ -75,9 +74,4 @@
     };
     return Engine;
   }());
-  function import$(obj, src){
-    var own = {}.hasOwnProperty;
-    for (var key in src) if (own.call(src, key)) obj[key] = src[key];
-    return obj;
-  }
 }).call(this);
