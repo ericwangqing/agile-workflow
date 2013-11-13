@@ -1,5 +1,5 @@
 workflow-def = 
-  name: '苹果买卖，简单分支'
+  name: '苹果买卖，简单分支2'
   steps:
     * name: 'Start Trade'
       is-start-active: true
@@ -13,7 +13,7 @@ workflow-def =
     * name: 'Sale Apple'
       can-act: -> @apple >= 0 # 这里如果仅仅是大于零的话，defer-act会无法进行
       can-end: -> @apple is 0
-      next: 'End Trade' 
+      next: ['Save Money', 'End Trade']
 
     * name: 'Save Money'
       can-act: -> @money >= 0

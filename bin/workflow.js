@@ -18,6 +18,27 @@
         };
       this.state = 'pending';
     }
+    prototype.retryContextAwareSteps = function(){
+      var i$, ref$, len$, step, ref1$, results$ = [];
+      for (i$ = 0, len$ = (ref$ = this.contextAwareSteps()).length; i$ < len$; ++i$) {
+        step = ref$[i$];
+        if (((ref1$ = step.state) !== 'end' && ref1$ !== 'acting') && step.canAct.apply(step.context)) {
+          step.state = 'active';
+          results$.push(step.act());
+        }
+      }
+      return results$;
+    };
+    prototype.contextAwareSteps = function(){
+      var i$, ref$, len$, step, results$ = [];
+      for (i$ = 0, len$ = (ref$ = _.values(this.steps)).length; i$ < len$; ++i$) {
+        step = ref$[i$];
+        if (step.isContextAware) {
+          results$.push(step);
+        }
+      }
+      return results$;
+    };
     prototype.actingSteps = function(){
       var i$, ref$, len$, step, results$ = [];
       for (i$ = 0, len$ = (ref$ = _.values(this.steps)).length; i$ < len$; ++i$) {
@@ -62,6 +83,13 @@
         return results$;
       }.call(this)).join('\n\t') + '\n';
       return "Workflow: '" + this.name + "', id: " + this.id + ", Steps: " + stepsStrs;
+    };
+    prototype.showStepInState = function(state){
+      var steps;
+      steps = this[state + 'Steps']();
+      ({
+        debug: state + "-steps: " + steps
+      });
     };
     return Workflow;
   }(Step));

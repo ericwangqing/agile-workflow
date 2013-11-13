@@ -5,7 +5,7 @@ describe '工作流引擎基本测试', ->
     h.extend-should!
 
   describe 'Hello World', ->
-    can "执行简单工作流: 'Hello World'正常\n", ->
+    can "正常执行简单工作流: 'Hello World'\n", ->
       h.test-workflow 'hello-world', [], ['Say Hello', 'Say Hello Back']
 
     can "不能执行非Active的步骤\n", ->

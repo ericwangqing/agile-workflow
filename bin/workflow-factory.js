@@ -1,5 +1,5 @@
 (function(){
-  var debug, Workflow, Step, ActorFactory, utils, _, createSteps, createUnwiredSteps, wireSteps, getActor;
+  var debug, Workflow, Step, ActorFactory, utils, _, createSteps, createUnwiredSteps, wireSteps, _getNextSteps, getActor;
   debug = require('debug')('aw');
   Workflow = require('./Workflow');
   Step = require('./Step');
@@ -27,11 +27,38 @@
     return steps;
   };
   wireSteps = function(steps, wfDef){
-    var i$, ref$, len$, stepDef, step, results$ = [];
+    var i$, ref$, len$, stepDef, step, nextSteps, ref1$, results$ = [];
     for (i$ = 0, len$ = (ref$ = wfDef.steps).length; i$ < len$; ++i$) {
       stepDef = ref$[i$];
       step = steps[stepDef.name];
-      results$.push(step.setNext(steps[stepDef.next]));
+      if (typeof stepDef.next === 'string') {
+        nextSteps = (ref1$ = [], ref1$[0] = {
+          step: steps[stepDef.next]
+        }, ref1$);
+      } else if (_.isArray(stepDef.next)) {
+        nextSteps = _getNextSteps(steps, stepDef.next);
+      }
+      results$.push(step.next = nextSteps);
+    }
+    return results$;
+  };
+  _getNextSteps = function(steps, nextDef){
+    var createStep, i$, len$, s, results$ = [];
+    createStep = function(s){
+      if (typeof s === "string") {
+        return {
+          step: steps[s]
+        };
+      } else {
+        return {
+          step: steps[s.name],
+          canEnter: s.canEnter
+        };
+      }
+    };
+    for (i$ = 0, len$ = nextDef.length; i$ < len$; ++i$) {
+      s = nextDef[i$];
+      results$.push(createStep(s));
     }
     return results$;
   };
@@ -52,7 +79,7 @@
       }, ref$.name = wfDef.name, ref$.canAct = wfDef.canAct, ref$.canEnd = wfDef.canEnd, ref$));
       for (i$ = 0, len$ = (ref$ = _.values(steps)).length; i$ < len$; ++i$) {
         step = ref$[i$];
-        step.setWorkflow(workflow);
+        step.workflow = workflow;
       }
       return workflow;
     }

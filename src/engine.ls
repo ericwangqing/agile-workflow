@@ -13,7 +13,7 @@ module.exports = class Engine
     @workflows.push workflow
     workflow
 
-  human-execute: (workflow-def, resource)-> 
+  human-execute: (workflow-def, resource)-> # 人工执行时，需要act一次，才能等候def-act，给入人工执行的结果
     workflow = @add workflow-def, resource
     for active-step in workflow.active-steps!
       active-step.act!

@@ -11,14 +11,11 @@ module.exports =
     @show-workflow!
 
   show-acting-step: !->
-    @_show-step-in-state 'acting'
+    @workflow.show-step-in-state 'acting'
 
   show-active-step: !->
-    @_show-step-in-state 'active'
+    @workflow.show-step-in-state 'active'
 
-  _show-step-in-state: !(state)->
-    steps = @workflow[state+'Steps']!
-    debug: "#{state}-steps: #{steps}"
 
   show-workflow: !->
     debug @workflow
