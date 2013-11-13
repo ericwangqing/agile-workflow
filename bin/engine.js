@@ -25,7 +25,7 @@
     prototype.humanExecute = function(workflowDef, resource){
       var workflow, i$, ref$, len$, activeStep;
       workflow = this.add(workflowDef, resource);
-      for (i$ = 0, len$ = (ref$ = workflow.activeSteps).length; i$ < len$; ++i$) {
+      for (i$ = 0, len$ = (ref$ = workflow.activeSteps()).length; i$ < len$; ++i$) {
         activeStep = ref$[i$];
         activeStep.act();
       }

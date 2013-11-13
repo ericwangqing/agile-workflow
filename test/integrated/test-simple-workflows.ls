@@ -22,28 +22,3 @@ describe '工作流引擎基本测试', ->
       h.test-workflow 'a-plus-b', [{a: 1}, {b: 0}, {b: 1}, {c: 2}], ['Get A', 'Get B', 'Get B', 'Judge']
 
 
-
-test-homework-workflow = !(workflow-def-filename, initial-context)->
-  load-workflow workflow-def-filename
-  active-steps-should-be 'assignment'
-
-  human-do 'assignment', initial-context
-  active-steps-should-be 'submit'
-
-  human-do 'submit', {name: '张三'}
-  active-steps-should-be 'submit'
-
-  (->
-    human-do 'submit', {name: '张三'}
-  ).should.throw!
-  active-steps-should-be 'submit'
-
-  (->
-    human-do 'submit', {name: 'Stranger'}
-  ).should.throw!
-  active-steps-should-be 'submit'
-
-  human-do 'submit', {name: '李四'}
-  active-steps-should-be []
-
-

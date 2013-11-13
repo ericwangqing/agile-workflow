@@ -10,6 +10,7 @@ workflow-def =
       can-end: -> @b > 0
       next: 'Judge'
     * name: 'Judge'
+      can-act: -> @a > 0 && @b > 0
       can-end: -> @a + @b == @c
 
 

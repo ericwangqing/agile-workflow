@@ -1,7 +1,7 @@
 (function(){
-  var debug, eventBus, Actor, HumanActor, AutoActor, ActorFactory;
+  var debug, _, Actor, HumanActor, AutoActor, ActorFactory;
   debug = require('debug')('aw');
-  eventBus = require('./event-bus');
+  _ = require('underscore');
   Actor = (function(){
     Actor.displayName = 'Actor';
     var prototype = Actor.prototype, constructor = Actor;
@@ -16,14 +16,19 @@
     function HumanActor(){
       this.isDefer = true;
     }
+    prototype.act = function(context){};
     return HumanActor;
   }());
   AutoActor = (function(){
     AutoActor.displayName = 'AutoActor';
     var prototype = AutoActor.prototype, constructor = AutoActor;
-    function AutoActor(){
+    function AutoActor(buinessHandler){
+      this.buinessHandler = buinessHandler;
       this.isDefer = false;
     }
+    prototype.act = function(context){
+      return this.buinessHandler.handle(context);
+    };
     return AutoActor;
   }());
   module.exports = ActorFactory = {

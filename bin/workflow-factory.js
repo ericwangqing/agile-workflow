@@ -1,24 +1,20 @@
 (function(){
-  var debug, Workflow, Step, ActorFactory, utils, _, createSteps, createUnwiredSteps, wireStepsAndInitialActive, getActor;
+  var debug, Workflow, Step, ActorFactory, utils, _, createSteps, createUnwiredSteps, wireSteps, getActor;
   debug = require('debug')('aw');
   Workflow = require('./Workflow');
   Step = require('./Step');
   ActorFactory = require('./Actor-factory');
   utils = require('./utils');
   _ = require('underscore');
-  createSteps = function(wfDef, resource){
-    var steps, activeSteps;
-    steps = createUnwiredSteps(wfDef, resource);
-    activeSteps = wireStepsAndInitialActive(steps, wfDef);
-    return {
-      steps: steps,
-      activeSteps: activeSteps
-    };
+  createSteps = function(wfDef, context, resource){
+    var steps;
+    steps = createUnwiredSteps(wfDef, context, resource);
+    wireSteps(steps, wfDef);
+    return steps;
   };
-  createUnwiredSteps = function(wfDef, resource){
-    var steps, context, i$, ref$, len$, stepDef, actor;
+  createUnwiredSteps = function(wfDef, context, resource){
+    var steps, i$, ref$, len$, stepDef, actor;
     steps = {};
-    context = _.extend({}, wfDef.context);
     for (i$ = 0, len$ = (ref$ = wfDef.steps).length; i$ < len$; ++i$) {
       stepDef = ref$[i$];
       actor = getActor(stepDef.actor, resource);
@@ -30,37 +26,30 @@
     }
     return steps;
   };
-  wireStepsAndInitialActive = function(steps, wfDef){
-    var activeSteps, i$, ref$, len$, stepDef, step;
-    activeSteps = [];
+  wireSteps = function(steps, wfDef){
+    var i$, ref$, len$, stepDef, step, results$ = [];
     for (i$ = 0, len$ = (ref$ = wfDef.steps).length; i$ < len$; ++i$) {
       stepDef = ref$[i$];
       step = steps[stepDef.name];
-      step.setNext(steps[stepDef.next]);
-      if (stepDef.isStartActive) {
-        step.state = 'active';
-        activeSteps.push(step);
-      }
+      results$.push(step.setNext(steps[stepDef.next]));
     }
-    return activeSteps;
+    return results$;
   };
   getActor = function(type, resource){
     return ActorFactory.createActor(type || 'human');
   };
   module.exports = {
     createWorkflow: function(wfDef, resource, engineCallback){
-      var ref$, steps, activeSteps, context, id, workflow, i$, len$, step;
-      ref$ = createSteps(wfDef, resource), steps = ref$.steps, activeSteps = ref$.activeSteps;
-      context = null;
+      var context, steps, id, workflow, ref$, i$, len$, step;
+      context = _.extend({}, wfDef.context);
+      steps = createSteps(wfDef, context, resource);
       id = 'wf-' + utils.getUuid();
-      workflow = new Workflow({
+      workflow = new Workflow((ref$ = {
         id: id,
-        name: wfDef.name,
         steps: steps,
-        activeSteps: activeSteps,
         context: context,
         engineCallback: engineCallback
-      });
+      }, ref$.name = wfDef.name, ref$.canAct = wfDef.canAct, ref$.canEnd = wfDef.canEnd, ref$));
       for (i$ = 0, len$ = (ref$ = _.values(steps)).length; i$ < len$; ++i$) {
         step = ref$[i$];
         step.setWorkflow(workflow);

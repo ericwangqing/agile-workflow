@@ -17,7 +17,7 @@ describe '常规工作流测试', ->
       h.active-steps-should-be ['Judge']
 
       h.human-do 'Judge', {c: 5}
-      h.active-steps-should-be []
+      h.active-and-acting-steps-should-be []
 
   describe "多个Actor同时执行一个step的工作流", ->
     can "执行多个学生交作业的工作流'Homework（预定义条件）'正常\n", ->
@@ -30,7 +30,7 @@ describe '常规工作流测试', ->
           @students.length is 0
         can-submit: ->
           return false if not (@name in @students)
-          @students = _.without @students, @name
+          @students = _.without @students, @name 
 
 
 test-homework-workflow = !(workflow-def-filename, initial-context)->
@@ -41,18 +41,18 @@ test-homework-workflow = !(workflow-def-filename, initial-context)->
   h.active-steps-should-be 'submit'
 
   h.human-do 'submit', {name: '张三'}
-  h.active-steps-should-be 'submit'
+  h.acting-steps-should-be 'submit'
 
   (->
     h.human-do 'submit', {name: '张三'}
   ).should.throw!
-  h.active-steps-should-be 'submit'
+  h.acting-steps-should-be 'submit'
 
   (->
     h.human-do 'submit', {name: 'Stranger'}
   ).should.throw!
-  h.active-steps-should-be 'submit'
+  h.acting-steps-should-be 'submit'
 
   h.human-do 'submit', {name: '李四'}
-  h.active-steps-should-be []
+  h.active-and-acting-steps-should-be []
 

@@ -10,8 +10,15 @@ module.exports =
     @workflow = @engine.human-execute wfd, resource = null
     @show-workflow!
 
+  show-acting-step: !->
+    @_show-step-in-state 'acting'
+
   show-active-step: !->
-    debug "active-steps: #{@workflow.active-steps}"
+    @_show-step-in-state 'active'
+
+  _show-step-in-state: !(state)->
+    steps = @workflow[state+'Steps']!
+    debug: "#{state}-steps: #{steps}"
 
   show-workflow: !->
     debug @workflow
@@ -19,29 +26,40 @@ module.exports =
   human-do: (step-name, human-act-result)->
     @engine.human-act-step @workflow.id, step-name, human-act-result
 
+  acting-steps-should-be: (steps)->
+    @_steps-in-the-state-should-be steps, 'acting'
+
   active-steps-should-be: (steps)->
+    @_steps-in-the-state-should-be steps, 'active'
+
+  active-and-acting-steps-should-be: (steps)->
+    @_steps-in-the-state-should-be steps, 'activeAndActing'
+
+  _steps-in-the-state-should-be: (steps, state)->
     steps = [] <<< 0: steps if not _.is-array steps
-    [step.name for step in @workflow.active-steps].should.eql steps
+    [step.name for step in @workflow.[state + 'Steps']!].should.eql steps
+
 
   extend-should: !->
-    should.Assertion.prototype.in-active-steps = ->
-      is-in-active-steps = ~> 
-        for step in @workflow.active-steps
+    should.Assertion.prototype.in-acting-steps = ->
+      is-in-acting-steps = ~> 
+        for step in @workflow.acting-steps!
           return true if @.obj is step.name
         false
-      @assert(is-in-active-steps!, "not in current active steps")
+      @assert(is-in-acting-steps!, "not in current active steps")
 
   test-workflow: !(wf-name, human-act-results, expected-step-sequence)->
     @load-workflow wf-name
-    @workflow.active-steps[0].name.should.eql expected-step-sequence[0]
+    @workflow.active-and-acting-steps![0].name.should.eql expected-step-sequence[0]
     @show-active-step!
 
     for i in [1 to expected-step-sequence.length]
-      @human-do @workflow.active-steps[0].name, human-act-results[i - 1]
+      @human-do @workflow.active-and-acting-steps![0].name, human-act-results[i - 1]
       if i < expected-step-sequence.length
-        @active-steps-should-be expected-step-sequence[i]
-        # expected-step-sequence[i].should.in-active-steps!
+        @active-and-acting-steps-should-be expected-step-sequence[i]
+        # expected-step-sequence[i].should.in-acting-steps!
       else # last step executed
-        @workflow.active-steps.length.should.eql 0
-      @show-active-step!
+        @workflow.active-steps!.length.should.eql 0
+        @workflow.acting-steps!.length.should.eql 0
+      @show-acting-step! 
 

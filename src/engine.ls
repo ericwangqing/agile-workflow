@@ -15,7 +15,7 @@ module.exports = class Engine
 
   human-execute: (workflow-def, resource)-> 
     workflow = @add workflow-def, resource
-    for active-step in workflow.active-steps
+    for active-step in workflow.active-steps!
       active-step.act!
     workflow
 

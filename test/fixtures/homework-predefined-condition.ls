@@ -6,6 +6,7 @@ workflow-def =
     can-submit: ->
       return false if not (@name in @students)
       @students = _.without @students, @name
+      true
   steps:
     * name: 'assignment'
       is-start-active: true

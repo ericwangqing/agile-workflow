@@ -1,20 +1,25 @@
 workflow-def = 
-  name: '买卖苹果，有分支步骤'
+  name: '卖苹果，有分支步骤'
   context: {apple: 0, money: 0}
   steps:
     * name: 'Get Apple'
       is-start-active: true
-      can-act: -> true
-      can-end: -> true
+      can-end: -> @stop-get-apple
       next: 
         * name: 'Sale Apple'
-          can-do: -> @apple > 0
+          can-enter: -> @apple > 0
         * name: 'Save Money'
-          can-do: -> money > 0
+          can-enter: -> money > 0
 
     * name: 'Sale Apple'
-      can-act: -> true
-      can-end: -> @is-all-submit! # 大家都交了才能结束
+      can-act: -> @apple > 0
+      can-end: -> @apple = 0
+      next: 'Go Home' 
+
+    * name: 'Save Money'
+      can-act: -> @money > 0
+      can-end: -> @money = 0
+      next: 'Go Home' 
 
     * name: 'Go Home'
       can-act: -> true

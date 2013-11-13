@@ -2,8 +2,21 @@ require! './Step'
 _ = require 'underscore'
 
 module.exports = class Workflow extends Step # 这样workflow就可以作为step使用
-  ({@id, @name, @steps, @active-steps, @context, @engine-callback})->
+  ({@id, @name, @steps, @context, @engine-callback, @can-act = -> true, @can-end = -> true})->
     @state = 'pending'
+
+  acting-steps: ->
+    [step for step in _.values @steps when step.state is 'acting']
+
+  active-steps: ->
+    [step for step in _.values @steps when step.state is 'active']
+
+  active-and-acting-steps: ->
+    [step for step in _.values @steps when step.state in ['active', 'acting']]
+
+
+  is-going-to-end: (step)->
+    !!step.is-end-step or (!step.next and @can-end!)
 
   to-string: ->
     steps-strs = '\n\t' + ([''+ step for step in _.values @steps].join '\n\t') + '\n'

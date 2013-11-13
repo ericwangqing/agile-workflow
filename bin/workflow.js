@@ -6,9 +6,51 @@
   module.exports = Workflow = (function(superclass){
     var prototype = extend$((import$(Workflow, superclass).displayName = 'Workflow', Workflow), superclass).prototype, constructor = Workflow;
     function Workflow(arg$){
-      this.id = arg$.id, this.name = arg$.name, this.steps = arg$.steps, this.activeSteps = arg$.activeSteps, this.context = arg$.context, this.engineCallback = arg$.engineCallback;
+      var ref$;
+      this.id = arg$.id, this.name = arg$.name, this.steps = arg$.steps, this.context = arg$.context, this.engineCallback = arg$.engineCallback, this.canAct = (ref$ = arg$.canAct) != null
+        ? ref$
+        : function(){
+          return true;
+        }, this.canEnd = (ref$ = arg$.canEnd) != null
+        ? ref$
+        : function(){
+          return true;
+        };
       this.state = 'pending';
     }
+    prototype.actingSteps = function(){
+      var i$, ref$, len$, step, results$ = [];
+      for (i$ = 0, len$ = (ref$ = _.values(this.steps)).length; i$ < len$; ++i$) {
+        step = ref$[i$];
+        if (step.state === 'acting') {
+          results$.push(step);
+        }
+      }
+      return results$;
+    };
+    prototype.activeSteps = function(){
+      var i$, ref$, len$, step, results$ = [];
+      for (i$ = 0, len$ = (ref$ = _.values(this.steps)).length; i$ < len$; ++i$) {
+        step = ref$[i$];
+        if (step.state === 'active') {
+          results$.push(step);
+        }
+      }
+      return results$;
+    };
+    prototype.activeAndActingSteps = function(){
+      var i$, ref$, len$, step, ref1$, results$ = [];
+      for (i$ = 0, len$ = (ref$ = _.values(this.steps)).length; i$ < len$; ++i$) {
+        step = ref$[i$];
+        if ((ref1$ = step.state) === 'active' || ref1$ === 'acting') {
+          results$.push(step);
+        }
+      }
+      return results$;
+    };
+    prototype.isGoingToEnd = function(step){
+      return !!step.isEndStep || (!step.next && this.canEnd());
+    };
     prototype.toString = function(){
       var stepsStrs, step;
       stepsStrs = '\n\t' + (function(){
