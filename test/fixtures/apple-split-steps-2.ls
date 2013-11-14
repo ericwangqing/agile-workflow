@@ -6,7 +6,7 @@ workflow-def =
       can-end: -> @apple > 0 or @money > 0
       next: 
         * name: 'Sale Apple'
-          can-enter: -> @apple > 0 # enter下一个step，则其为active，只有其can-act，才是acting
+          can-enter: -> @apple > 0 # 如果 can-act is true，则act进入acting，否则进入active
         * name: 'Save Money'
           can-enter: -> @money > 0
 

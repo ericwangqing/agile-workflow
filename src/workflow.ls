@@ -2,8 +2,11 @@ require! './Step'
 _ = require 'underscore'
 
 module.exports = class Workflow extends Step # 这样workflow就可以作为step使用
-  ({@id, @name, @steps, @context, @engine-callback, @can-act = -> true, @can-end = -> true})->
+  ({@id, @steps, @context, @wf-def})-> # 这里带上wf-def，以便持久化
     @state = 'pending'
+    @name = @wf-def.name
+    @can-act = @wf-def.can-act or -> true
+    @can-end = @wf-def.can-end or -> true
 
   retry-context-aware-steps: ->
     for step in @context-aware-steps!
@@ -27,15 +30,21 @@ module.exports = class Workflow extends Step # 这样workflow就可以作为step
   is-going-to-end: (step)->
     !!step.is-end-step or (!step.next and @can-end!)
 
+  save: (done)->
+    console.log "before workflow save"
+    @store.save-workflow @.marshal!, done
+
+  marshal: ->
+    marshal-workflow = _.pick @, 'name', 'id', 'state', 'wfDef', 'context'
+    marshal-workflow.steps = [step.marshal! for step in @steps]
+    marshal-workflow
+
   to-string: ->
     steps-strs = '\n\t' + ([''+ step for step in _.values @steps].join '\n\t') + '\n'
     "Workflow: '#{@name}', id: #{@id}, Steps: #{steps-strs}"
 
   show-step-in-state: !(state)->
     steps = @[state+'Steps']!
-    debug: "#{state}-steps: #{steps}"
-
-
-    # @_callback-engine name: "workflow:created:#{@id}"
+    debug "#{state}-steps: #{steps}"
 
 

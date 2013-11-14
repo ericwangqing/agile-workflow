@@ -1,4 +1,4 @@
-require! {async}
+require! {async, '../bin/Workflow-store'}
 debug = require('debug')('aw')
 _ = require 'underscore'
 
@@ -30,15 +30,9 @@ load-fixture = (data-name)->
   eval require('fs').readFileSync(FIXTURE_PATH + data-name + '.js', {encoding: 'utf-8'}) 
 
 
-# open-clean-db-and-load-fixtures = !(config, done)->
-#   (db) <-! database.get-db
-#   <-! db.drop-database
-#   collections = _.keys config
-#   async.each collections, !(collection, next)->
-#     (err, docs) <-! db.at-plus.[collection].insert config[collection], {safe: true}
-#     next!
-#   , ->
-#     done!
+clean-db = !(done)->
+  Workflow-store.con.drop-database done
+  
 
 # prepare-clean-test-db = !(done)->
 #   locations = load-fixture "locations-in-db"
@@ -75,6 +69,7 @@ load-fixture = (data-name)->
 module.exports =
   All-done-waiter: All-done-waiter
   load-fixture: load-fixture
+  clean-db: clean-db
   # open-clean-db-and-load-fixtures: open-clean-db-and-load-fixtures
   # prepare-clean-test-db: prepare-clean-test-db
   # close-db: close-db

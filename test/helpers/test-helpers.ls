@@ -3,11 +3,14 @@ debug = require('debug')('aw')
 
 module.exports = 
 
-  engine: new Engine store = null
+  create-engine: (done)->
+    new Engine db = null, !(@engine)~>
+      utils.clean-db done
+
 
   load-workflow: (wf-name)->
     wfd = utils.load-fixture wf-name
-    @workflow = @engine.human-execute wfd, resource = null
+    @workflow = @engine.human-start wfd, resource = null
     @show-workflow!
 
   show-acting-step: !->

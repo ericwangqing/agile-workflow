@@ -1,5 +1,5 @@
 (function(){
-  var debug, _, Actor, HumanActor, AutoActor, ActorFactory;
+  var debug, _, Actor, AsyncActor, SyncActor, ActorFactory;
   debug = require('debug')('aw');
   _ = require('underscore');
   Actor = (function(){
@@ -10,33 +10,33 @@
     }
     return Actor;
   }());
-  HumanActor = (function(){
-    HumanActor.displayName = 'HumanActor';
-    var prototype = HumanActor.prototype, constructor = HumanActor;
-    function HumanActor(){
+  AsyncActor = (function(){
+    AsyncActor.displayName = 'AsyncActor';
+    var prototype = AsyncActor.prototype, constructor = AsyncActor;
+    function AsyncActor(){
       this.isDefer = true;
     }
     prototype.act = function(context){};
-    return HumanActor;
+    return AsyncActor;
   }());
-  AutoActor = (function(){
-    AutoActor.displayName = 'AutoActor';
-    var prototype = AutoActor.prototype, constructor = AutoActor;
-    function AutoActor(buinessHandler){
+  SyncActor = (function(){
+    SyncActor.displayName = 'SyncActor';
+    var prototype = SyncActor.prototype, constructor = SyncActor;
+    function SyncActor(buinessHandler){
       this.buinessHandler = buinessHandler;
       this.isDefer = false;
     }
     prototype.act = function(context){
       return this.buinessHandler.handle(context);
     };
-    return AutoActor;
+    return SyncActor;
   }());
   module.exports = ActorFactory = {
     createActor: function(type){
-      if (type === 'human') {
-        return new HumanActor();
+      if (type === 'human' || 'async') {
+        return new AsyncActor();
       } else {
-        return new AutoActor();
+        return new SyncActor();
       }
     }
   };

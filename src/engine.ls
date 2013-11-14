@@ -1,20 +1,23 @@
-require! ['./workflow-factory', './event-bus']
+require! ['./workflow-factory', './event-bus', './Workflow-store']
 _ = require 'underscore'
 
-workflow-store =
-  retrieve-all-running-workflows: -> []
-
 module.exports = class Engine
-  (@store, config) ->
-    @workflows = (@store or workflow-store).retrieve-all-running-workflows!
+  (db, done) ->
+    (@store) <~ new Workflow-store db
+    (@workflows) <~! @store.retrieve-all-running-workflows
+    done @
 
-  add: (workflow-def, resource)-> #
-    workflow = workflow-factory.create-workflow workflow-def, resource, @_event-handler
+  add: (workflow-def)-> #
+    workflow = workflow-factory.create-workflow workflow-def
+    workflow.store = @store
     @workflows.push workflow
+    debug "before"
+    workflow.save!
+    debug "after"
     workflow
 
-  human-execute: (workflow-def, resource)-> # 人工执行时，需要act一次，才能等候def-act，给入人工执行的结果
-    workflow = @add workflow-def, resource
+  human-start: (workflow-def)-> # 人工启动工作流时，需要act一次，将active steps至于等候def-act，等待人工执行的结果
+    workflow = @add workflow-def
     for active-step in workflow.active-steps!
       active-step.act!
     workflow

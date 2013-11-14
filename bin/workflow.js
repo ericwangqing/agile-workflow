@@ -6,17 +6,15 @@
   module.exports = Workflow = (function(superclass){
     var prototype = extend$((import$(Workflow, superclass).displayName = 'Workflow', Workflow), superclass).prototype, constructor = Workflow;
     function Workflow(arg$){
-      var ref$;
-      this.id = arg$.id, this.name = arg$.name, this.steps = arg$.steps, this.context = arg$.context, this.engineCallback = arg$.engineCallback, this.canAct = (ref$ = arg$.canAct) != null
-        ? ref$
-        : function(){
-          return true;
-        }, this.canEnd = (ref$ = arg$.canEnd) != null
-        ? ref$
-        : function(){
-          return true;
-        };
+      this.id = arg$.id, this.steps = arg$.steps, this.context = arg$.context, this.wfDef = arg$.wfDef;
       this.state = 'pending';
+      this.name = this.wfDef.name;
+      this.canAct = this.wfDef.canAct || function(){
+        return true;
+      };
+      this.canEnd = this.wfDef.canEnd || function(){
+        return true;
+      };
     }
     prototype.retryContextAwareSteps = function(){
       var i$, ref$, len$, step, ref1$, results$ = [];
@@ -72,6 +70,21 @@
     prototype.isGoingToEnd = function(step){
       return !!step.isEndStep || (!step.next && this.canEnd());
     };
+    prototype.save = function(done){
+      console.log("before workflow save");
+      return this.store.saveWorkflow(this.marshal(), done);
+    };
+    prototype.marshal = function(){
+      var marshalWorkflow, res$, i$, ref$, len$, step;
+      marshalWorkflow = _.pick(this, 'name', 'id', 'state', 'wfDef', 'context');
+      res$ = [];
+      for (i$ = 0, len$ = (ref$ = this.steps).length; i$ < len$; ++i$) {
+        step = ref$[i$];
+        res$.push(step.marshal());
+      }
+      marshalWorkflow.steps = res$;
+      return marshalWorkflow;
+    };
     prototype.toString = function(){
       var stepsStrs, step;
       stepsStrs = '\n\t' + (function(){
@@ -87,9 +100,7 @@
     prototype.showStepInState = function(state){
       var steps;
       steps = this[state + 'Steps']();
-      ({
-        debug: state + "-steps: " + steps
-      });
+      debug(state + "-steps: " + steps);
     };
     return Workflow;
   }(Step));

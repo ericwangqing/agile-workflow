@@ -40,8 +40,8 @@ module.exports = class Step
 
   _after-act: ->
     # debug "******** Actor callback at step: #{@name}"
-    # 那些原来active，但是没有能acting（未通过can-act）的steps，由于此时context变化了，可能可以act了. 注意，只有定义为is-context-aware的step才会被重新评估。
-    # 在先retry context aware，还是先active next上，这里采用了广度优先的算法，先retry c.a.
+    # 在执行了一次step之后，context变化了，要重新评估is-context-aware的step。
+    # 在先retry context aware，还是先active next上，这里采用了广度优先的算法，先retry c.a.    
     @workflow.retry-context-aware-steps! 
     @_active-next!
     if @can-end.apply @context
@@ -52,8 +52,6 @@ module.exports = class Step
       # still in this step
       debug "Still in step: #{@name}, act times: #{@act-times},  active-steps: #{@workflow.active-steps!}, acting-steps: #{@workflow.acting-steps!}"
       @act!
-    # if @_if-can-enter-next!
-    #   @_act-next! # 如果是多个next的时候，不一定要can-end才能进入下一个Step≈
   
   _active-next: ->
     for next-step in @next
@@ -62,6 +60,10 @@ module.exports = class Step
         next-step.step.state = 'active'
         next-step.step.act!
 
+  marshal: ->
+    marshalled-workflow = _.pick @, 'name', 'state', 'actTimes'
+
+  
   to-string: ->
     "Step: '#{@name}', state: #{@state}, act-times: #{@act-times}."
 

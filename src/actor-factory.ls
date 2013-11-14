@@ -3,14 +3,14 @@ _ = require 'underscore'
 class Actor
   (@name)->
 
-class Human-actor
+class Async-actor
   ->
     @is-defer = true
 
   act: (context)->
     # do nothing business. all business has already done by human.
 
-class Auto-actor
+class Sync-actor
   (@buiness-handler)->
     @is-defer = false
 
@@ -22,4 +22,4 @@ class Auto-actor
 
 module.exports = Actor-factory =
   create-actor: (type)->
-    if type is 'human' then new Human-actor! else new Auto-actor!
+    if type is 'human' or 'async' then new Async-actor! else new Sync-actor!

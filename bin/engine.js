@@ -1,30 +1,36 @@
 (function(){
-  var debug, workflowFactory, eventBus, _, workflowStore, Engine;
+  var debug, workflowFactory, eventBus, WorkflowStore, _, Engine;
   debug = require('debug')('aw');
   workflowFactory = require('./workflow-factory');
   eventBus = require('./event-bus');
+  WorkflowStore = require('./Workflow-store');
   _ = require('underscore');
-  workflowStore = {
-    retrieveAllRunningWorkflows: function(){
-      return [];
-    }
-  };
   module.exports = Engine = (function(){
     Engine.displayName = 'Engine';
     var prototype = Engine.prototype, constructor = Engine;
-    function Engine(store, config){
-      this.store = store;
-      this.workflows = (this.store || workflowStore).retrieveAllRunningWorkflows();
+    function Engine(db, done){
+      var this$ = this;
+      new WorkflowStore(db, function(store){
+        this$.store = store;
+        return this$.store.retrieveAllRunningWorkflows(function(workflows){
+          this$.workflows = workflows;
+          done(this$);
+        });
+      });
     }
-    prototype.add = function(workflowDef, resource){
+    prototype.add = function(workflowDef){
       var workflow;
-      workflow = workflowFactory.createWorkflow(workflowDef, resource, this._eventHandler);
+      workflow = workflowFactory.createWorkflow(workflowDef);
+      workflow.store = this.store;
       this.workflows.push(workflow);
+      debug("before");
+      workflow.save();
+      debug("after");
       return workflow;
     };
-    prototype.humanExecute = function(workflowDef, resource){
+    prototype.humanStart = function(workflowDef){
       var workflow, i$, ref$, len$, activeStep;
-      workflow = this.add(workflowDef, resource);
+      workflow = this.add(workflowDef);
       for (i$ = 0, len$ = (ref$ = workflow.activeSteps()).length; i$ < len$; ++i$) {
         activeStep = ref$[i$];
         activeStep.act();

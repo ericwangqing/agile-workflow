@@ -1,30 +1,44 @@
 (function(){
-  var debug, Workflow, Step, ActorFactory, utils, _, createSteps, createUnwiredSteps, wireSteps, _getNextSteps, getActor;
+  var debug, Workflow, Step, ActorFactory, utils, _, createSteps, createUnwiredSteps, restoreState, wireSteps, _getNextSteps, getActor;
   debug = require('debug')('aw');
   Workflow = require('./Workflow');
   Step = require('./Step');
   ActorFactory = require('./Actor-factory');
   utils = require('./utils');
   _ = require('underscore');
-  createSteps = function(wfDef, context, resource){
+  createSteps = function(wfDef, context, marshalledWorkflow){
     var steps;
-    steps = createUnwiredSteps(wfDef, context, resource);
+    steps = createUnwiredSteps(wfDef, context, marshalledWorkflow);
     wireSteps(steps, wfDef);
     return steps;
   };
-  createUnwiredSteps = function(wfDef, context, resource){
-    var steps, i$, ref$, len$, stepDef, actor;
+  createUnwiredSteps = function(wfDef, context, marshalledWorkflow){
+    var steps, i$, ref$, len$, stepDef, actor, step;
     steps = {};
     for (i$ = 0, len$ = (ref$ = wfDef.steps).length; i$ < len$; ++i$) {
       stepDef = ref$[i$];
-      actor = getActor(stepDef.actor, resource);
-      steps[stepDef.name] = new Step({
+      actor = getActor(stepDef.actor);
+      step = new Step({
         actor: actor,
         context: context,
         stepDef: stepDef
       });
+      if (marshalledWorkflow) {
+        restoreState(step, marshalledWorkflow);
+      }
+      steps[stepDef.name] = step;
     }
     return steps;
+  };
+  restoreState = function(step, marshalledWorkflow){
+    var i$, ref$, len$, marshalledStep;
+    for (i$ = 0, len$ = (ref$ = marshalledWorkflow.steps).length; i$ < len$; ++i$) {
+      marshalledStep = ref$[i$];
+      if (step.name === marshalledStep.name) {
+        step.state = marshalledStep.state;
+        step.actTimes = marshalledStep.actTimes;
+      }
+    }
   };
   wireSteps = function(steps, wfDef){
     var i$, ref$, len$, stepDef, step, nextSteps, ref1$, results$ = [];
@@ -62,26 +76,30 @@
     }
     return results$;
   };
-  getActor = function(type, resource){
+  getActor = function(type){
     return ActorFactory.createActor(type || 'human');
   };
   module.exports = {
-    createWorkflow: function(wfDef, resource, engineCallback){
-      var context, steps, id, workflow, ref$, i$, len$, step;
-      context = _.extend({}, wfDef.context);
-      steps = createSteps(wfDef, context, resource);
+    createWorkflow: function(wfDef, marshalledWorkflow){
+      var context, steps, id, workflow, i$, ref$, len$, step;
+      context = _.extend({}, (marshalledWorkflow != null ? marshalledWorkflow.context : void 8) || wfDef.context);
+      steps = createSteps(wfDef, context, marshalledWorkflow);
       id = 'wf-' + utils.getUuid();
-      workflow = new Workflow((ref$ = {
+      workflow = new Workflow({
         id: id,
         steps: steps,
         context: context,
-        engineCallback: engineCallback
-      }, ref$.name = wfDef.name, ref$.canAct = wfDef.canAct, ref$.canEnd = wfDef.canEnd, ref$));
+        wfDef: wfDef
+      });
       for (i$ = 0, len$ = (ref$ = _.values(steps)).length; i$ < len$; ++i$) {
         step = ref$[i$];
         step.workflow = workflow;
       }
       return workflow;
+    },
+    unmarshalWorkflow: function(marshalledWorkflow){
+      var workflow;
+      return workflow = this.createWorkflow(marshalledWorkflow.wfDef, marshalledWorkflow);
     }
   };
 }).call(this);
