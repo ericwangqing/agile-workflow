@@ -81,8 +81,8 @@
       return results$;
     };
     prototype.marshal = function(){
-      var marshalledWorkflow;
-      return marshalledWorkflow = _.pick(this, 'name', 'state', 'actTimes');
+      var marshalledStep;
+      return marshalledStep = _.pick(this, 'name', 'state', 'actTimes');
     };
     prototype.toString = function(){
       return "Step: '" + this.name + "', state: " + this.state + ", act-times: " + this.actTimes + ".";

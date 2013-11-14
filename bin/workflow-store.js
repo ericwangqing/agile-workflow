@@ -1,9 +1,10 @@
 (function(){
-  var debug, Db, Server, MongoClient, workflowFactory, storeCollectionName, mongo, WorkflowStore;
+  var debug, Db, Server, MongoClient, Workflow, workflowFactory, storeCollectionName, mongo, WorkflowStore;
   debug = require('debug')('aw');
   Db = require('mongodb').Db;
   Server = require('mongodb').Server;
   MongoClient = require('mongodb').MongoClient;
+  Workflow = require('./Workflow');
   workflowFactory = require('./workflow-factory');
   storeCollectionName = 'workflow';
   mongo = {
@@ -44,12 +45,18 @@
         return callback([]);
       } else {
         return this.collection.find({}).toArray(function(err, results){
-          var i$, len$, marshalledWorkflow;
+          var workflows, i$, len$, marshalledWorkflow, workflow;
+          debug("error: " + err);
+          workflows = [];
+          debug("KKKKKKKKKKK " + results.length);
           for (i$ = 0, len$ = results.length; i$ < len$; ++i$) {
             marshalledWorkflow = results[i$];
-            workflowFactory.unmarshalWorkflow(marshalledWorkflow).store = this;
+            Workflow.unmarshal(marshalledWorkflow);
+            workflow = workflowFactory.createWorkflow(marshalledWorkflow.wfDef, marshalledWorkflow);
+            debug("^^^^^^^^^ " + workflow);
+            workflows.push(workflow);
           }
-          callback(results);
+          callback(workflows);
         });
       }
     };

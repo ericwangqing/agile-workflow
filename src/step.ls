@@ -61,7 +61,7 @@ module.exports = class Step
         next-step.step.act!
 
   marshal: ->
-    marshalled-workflow = _.pick @, 'name', 'state', 'actTimes'
+    marshalled-step = _.pick @, 'name', 'state', 'actTimes'
 
   
   to-string: ->

@@ -1,4 +1,4 @@
-require! ['mongodb'.Db, 'mongodb'.Server, 'mongodb'.MongoClient, './workflow-factory']
+require! ['mongodb'.Db, 'mongodb'.Server, 'mongodb'.MongoClient, './Workflow', './workflow-factory']
 
 store-collection-name = 'workflow'
 mongo =
@@ -34,8 +34,15 @@ module.exports = class Workflow-store
     else
       # _workflow-store.retrieve-all-running-workflows!
       (err, results) <-! @collection.find {} .to-array
-      [(workflow-factory.unmarshal-workflow marshalled-workflow).store = @ for marshalled-workflow in results]
-      callback results
+      debug "error: #err"
+      workflows = []
+      debug "KKKKKKKKKKK #{results.length}"
+      for marshalled-workflow in results
+        Workflow.unmarshal marshalled-workflow
+        workflow = workflow-factory.create-workflow marshalled-workflow.wf-def, marshalled-workflow
+        debug "^^^^^^^^^ #workflow"
+        workflows.push workflow
+      callback workflows
 
   save-workflow: (marshalled-workflow, done)->
     (error, results) <-! @collection.update {_id: marshalled-workflow.id}, marshalled-workflow, {upsert: true}

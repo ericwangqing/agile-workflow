@@ -47,8 +47,5 @@ module.exports =
     [step.workflow = workflow for step in _.values steps]
     workflow
 
-  unmarshal-workflow: (marshalled-workflow)-> 
-    workflow = @create-workflow marshalled-workflow.wf-def, marshalled-workflow
-
 
 

@@ -5,7 +5,9 @@ module.exports =
 
   create-engine: (done)->
     new Engine db = null, !(@engine)~>
-      utils.clean-db done
+      # utils.clean-db ~> 
+      @engine.start done
+
 
 
   load-workflow: (wf-name)->
@@ -19,7 +21,7 @@ module.exports =
   show-active-step: !->
     @workflow.show-step-in-state 'active'
 
-
+ 
   show-workflow: !->
     debug @workflow
 

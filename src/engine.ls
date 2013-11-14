@@ -4,16 +4,19 @@ _ = require 'underscore'
 module.exports = class Engine
   (db, done) ->
     (@store) <~ new Workflow-store db
-    (@workflows) <~! @store.retrieve-all-running-workflows
     done @
+
+  start: (done)->
+    debug "LLLLLLLLLLLLLL"
+    (@workflows) <~! @store.retrieve-all-running-workflows
+    done!
+
 
   add: (workflow-def)-> #
     workflow = workflow-factory.create-workflow workflow-def
     workflow.store = @store
     @workflows.push workflow
-    debug "before"
     workflow.save!
-    debug "after"
     workflow
 
   human-start: (workflow-def)-> # 人工启动工作流时，需要act一次，将active steps至于等候def-act，等待人工执行的结果

@@ -12,20 +12,23 @@
       var this$ = this;
       new WorkflowStore(db, function(store){
         this$.store = store;
-        return this$.store.retrieveAllRunningWorkflows(function(workflows){
-          this$.workflows = workflows;
-          done(this$);
-        });
+        return done(this$);
       });
     }
+    prototype.start = function(done){
+      var this$ = this;
+      debug("LLLLLLLLLLLLLL");
+      return this.store.retrieveAllRunningWorkflows(function(workflows){
+        this$.workflows = workflows;
+        done();
+      });
+    };
     prototype.add = function(workflowDef){
       var workflow;
       workflow = workflowFactory.createWorkflow(workflowDef);
       workflow.store = this.store;
       this.workflows.push(workflow);
-      debug("before");
       workflow.save();
-      debug("after");
       return workflow;
     };
     prototype.humanStart = function(workflowDef){

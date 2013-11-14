@@ -1,10 +1,57 @@
 (function(){
-  var debug, Step, _, Workflow;
+  var debug, Step, utils, _, restoreWorkflowDefGuards, isGuardKey, parseGuardFunction, stringifyWorkflowDefGuards, stringifyGuardFunction, Workflow;
   debug = require('debug')('aw');
   Step = require('./Step');
+  utils = require('./utils');
   _ = require('underscore');
+  restoreWorkflowDefGuards = function(wfDef){
+    return utils.iterate(wfDef, function(key, value, obj){
+      if (isGuardKey(key)) {
+        return parseGuardFunction(obj, key, value);
+      } else {
+        return true;
+      }
+    });
+  };
+  isGuardKey = function(key){
+    return key.indexOf('can') >= 0 && key.indexOf('context') === -1;
+  };
+  parseGuardFunction = function(obj, key, value){
+    var isIterateDeep;
+    obj[key] = eval("fn = " + value);
+    return isIterateDeep = false;
+  };
+  stringifyWorkflowDefGuards = function(wfDef){
+    return utils.iterate(wfDef, function(key, value, obj){
+      if (isGuardKey(key)) {
+        return stringifyGuardFunction(obj, key, value);
+      } else {
+        return true;
+      }
+    });
+  };
+  stringifyGuardFunction = function(obj, key, value){
+    var isIterateDeep;
+    obj[key] = value.toString();
+    return isIterateDeep = false;
+  };
   module.exports = Workflow = (function(superclass){
     var prototype = extend$((import$(Workflow, superclass).displayName = 'Workflow', Workflow), superclass).prototype, constructor = Workflow;
+    Workflow.marshal = function(workflow){
+      var marshalledWorkflow, res$, i$, ref$, len$, step;
+      marshalledWorkflow = _.pick(workflow, 'name', 'id', 'state', 'context', 'wfDef');
+      stringifyWorkflowDefGuards(marshalledWorkflow.wfDef);
+      res$ = [];
+      for (i$ = 0, len$ = (ref$ = _.values(workflow.steps)).length; i$ < len$; ++i$) {
+        step = ref$[i$];
+        res$.push(step.marshal());
+      }
+      marshalledWorkflow.steps = res$;
+      return marshalledWorkflow;
+    };
+    Workflow.unmarshal = function(marshalledWorkflow){
+      return restoreWorkflowDefGuards(marshalledWorkflow.wfDef);
+    };
     function Workflow(arg$){
       this.id = arg$.id, this.steps = arg$.steps, this.context = arg$.context, this.wfDef = arg$.wfDef;
       this.state = 'pending';
@@ -71,19 +118,11 @@
       return !!step.isEndStep || (!step.next && this.canEnd());
     };
     prototype.save = function(done){
+      var marshalledWorkflow;
       console.log("before workflow save");
-      return this.store.saveWorkflow(this.marshal(), done);
-    };
-    prototype.marshal = function(){
-      var marshalWorkflow, res$, i$, ref$, len$, step;
-      marshalWorkflow = _.pick(this, 'name', 'id', 'state', 'wfDef', 'context');
-      res$ = [];
-      for (i$ = 0, len$ = (ref$ = this.steps).length; i$ < len$; ++i$) {
-        step = ref$[i$];
-        res$.push(step.marshal());
-      }
-      marshalWorkflow.steps = res$;
-      return marshalWorkflow;
+      marshalledWorkflow = constructor.marshal(this);
+      debug("marshalled-workflow: ", marshalledWorkflow);
+      return this.store.saveWorkflow(marshalledWorkflow, done);
     };
     prototype.toString = function(){
       var stepsStrs, step;

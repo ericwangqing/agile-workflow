@@ -96,10 +96,6 @@
         step.workflow = workflow;
       }
       return workflow;
-    },
-    unmarshalWorkflow: function(marshalledWorkflow){
-      var workflow;
-      return workflow = this.createWorkflow(marshalledWorkflow.wfDef, marshalledWorkflow);
     }
   };
 }).call(this);

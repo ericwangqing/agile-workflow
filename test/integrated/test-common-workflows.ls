@@ -5,6 +5,9 @@ describe '常规工作流测试', ->
     h.extend-should!
     h.create-engine done
 
+  after-each !(done)->
+    utils.clean-db done
+
   describe "多个start active step的工作流", ->
     can "执行两个start active的工作流: 'A + B = C （同时开始AB）'正常\n", ->
       h.load-workflow 'a-plus-b-two-start-active-steps'
