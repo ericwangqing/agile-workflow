@@ -31,7 +31,8 @@ load-fixture = (data-name)->
 
 
 clean-db = !(done)->
-  Workflow-store.con.drop-database done
+  done!
+  # Workflow-store.con.drop-database done
   
 
 # prepare-clean-test-db = !(done)->

@@ -53,7 +53,7 @@
             marshalledWorkflow = results[i$];
             Workflow.unmarshal(marshalledWorkflow);
             workflow = workflowFactory.createWorkflow(marshalledWorkflow.wfDef, marshalledWorkflow);
-            debug("^^^^^^^^^ " + workflow);
+            debug("^^^^^^^^^", workflow);
             workflows.push(workflow);
           }
           callback(workflows);

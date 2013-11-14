@@ -40,7 +40,7 @@ module.exports = class Workflow-store
       for marshalled-workflow in results
         Workflow.unmarshal marshalled-workflow
         workflow = workflow-factory.create-workflow marshalled-workflow.wf-def, marshalled-workflow
-        debug "^^^^^^^^^ #workflow"
+        debug "^^^^^^^^^", workflow
         workflows.push workflow
       callback workflows
 

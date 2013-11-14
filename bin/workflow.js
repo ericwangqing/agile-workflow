@@ -121,7 +121,6 @@
       var marshalledWorkflow;
       console.log("before workflow save");
       marshalledWorkflow = constructor.marshal(this);
-      debug("marshalled-workflow: ", marshalledWorkflow);
       return this.store.saveWorkflow(marshalledWorkflow, done);
     };
     prototype.toString = function(){

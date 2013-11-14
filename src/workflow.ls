@@ -65,7 +65,7 @@ module.exports = class Workflow extends Step # 这样workflow就可以作为step
   save: (done)->
     console.log "before workflow save"
     marshalled-workflow = @@marshal @
-    debug "marshalled-workflow: ", marshalled-workflow
+    # debug "marshalled-workflow: ", marshalled-workflow 
     @store.save-workflow marshalled-workflow, done
 
   to-string: ->

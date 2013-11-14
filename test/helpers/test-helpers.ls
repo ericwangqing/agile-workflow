@@ -5,7 +5,7 @@ module.exports =
 
   create-engine: (done)->
     new Engine db = null, !(@engine)~>
-      # utils.clean-db ~> 
+      utils.clean-db ~> 
       @engine.start done
 
 
