@@ -1,18 +1,18 @@
 (function(){
-  var debug, Workflow, Step, ActorFactory, utils, _, createSteps, createUnwiredSteps, restoreState, wireSteps, _getNextSteps, getActor;
+  var debug, Workflow, Step, ActorFactory, utils, _, createSteps, createUnwiredSteps, restoreStepsState, restoreStepState, wireSteps, _getNextSteps, getActor, _createWorkflow;
   debug = require('debug')('aw');
   Workflow = require('./Workflow');
   Step = require('./Step');
   ActorFactory = require('./Actor-factory');
   utils = require('./utils');
   _ = require('underscore');
-  createSteps = function(wfDef, context, marshalledWorkflow){
+  createSteps = function(wfDef, context){
     var steps;
-    steps = createUnwiredSteps(wfDef, context, marshalledWorkflow);
+    steps = createUnwiredSteps(wfDef, context);
     wireSteps(steps, wfDef);
     return steps;
   };
-  createUnwiredSteps = function(wfDef, context, marshalledWorkflow){
+  createUnwiredSteps = function(wfDef, context){
     var steps, i$, ref$, len$, stepDef, actor, step;
     steps = {};
     for (i$ = 0, len$ = (ref$ = wfDef.steps).length; i$ < len$; ++i$) {
@@ -23,18 +23,22 @@
         context: context,
         stepDef: stepDef
       });
-      if (marshalledWorkflow) {
-        restoreState(step, marshalledWorkflow);
-      }
       steps[stepDef.name] = step;
     }
     return steps;
   };
-  restoreState = function(step, marshalledWorkflow){
-    var i$, ref$, len$, marshalledStep;
-    for (i$ = 0, len$ = (ref$ = marshalledWorkflow.steps).length; i$ < len$; ++i$) {
-      marshalledStep = ref$[i$];
-      if (step.name === marshalledStep.name) {
+  restoreStepsState = function(workflow, marshalledSteps){
+    var i$, ref$, len$, step;
+    for (i$ = 0, len$ = (ref$ = _.values(workflow.steps)).length; i$ < len$; ++i$) {
+      step = ref$[i$];
+      restoreStepState(step, marshalledSteps);
+    }
+  };
+  restoreStepState = function(step, marshalledSteps){
+    var i$, len$, marshalledStep;
+    for (i$ = 0, len$ = marshalledSteps.length; i$ < len$; ++i$) {
+      marshalledStep = marshalledSteps[i$];
+      if (marshalledStep.name === step.name) {
         step.state = marshalledStep.state;
         step.actTimes = marshalledStep.actTimes;
       }
@@ -79,22 +83,31 @@
   getActor = function(type){
     return ActorFactory.createActor(type || 'human');
   };
+  _createWorkflow = function(wfDef, marshalledWorkflowId){
+    var context, steps, id, workflow, i$, ref$, len$, step;
+    context = _.extend({}, wfDef.context);
+    steps = createSteps(wfDef, context);
+    id = marshalledWorkflowId || 'wf-' + utils.getUuid();
+    workflow = new Workflow({
+      id: id,
+      steps: steps,
+      context: context,
+      wfDef: wfDef
+    });
+    for (i$ = 0, len$ = (ref$ = _.values(steps)).length; i$ < len$; ++i$) {
+      step = ref$[i$];
+      step.workflow = workflow;
+    }
+    return workflow;
+  };
   module.exports = {
-    createWorkflow: function(wfDef, marshalledWorkflow){
-      var context, steps, id, workflow, i$, ref$, len$, step;
-      context = _.extend({}, (marshalledWorkflow != null ? marshalledWorkflow.context : void 8) || wfDef.context);
-      steps = createSteps(wfDef, context, marshalledWorkflow);
-      id = 'wf-' + utils.getUuid();
-      workflow = new Workflow({
-        id: id,
-        steps: steps,
-        context: context,
-        wfDef: wfDef
-      });
-      for (i$ = 0, len$ = (ref$ = _.values(steps)).length; i$ < len$; ++i$) {
-        step = ref$[i$];
-        step.workflow = workflow;
-      }
+    createWorkflow: function(wfDef){
+      return _createWorkflow(wfDef);
+    },
+    resumeMarshalledWorkflow: function(marshalledWorkflow){
+      var workflow;
+      workflow = _createWorkflow(marshalledWorkflow.wfDef, marshalledWorkflow._id);
+      restoreStepsState(workflow, marshalledWorkflow.steps);
       return workflow;
     }
   };

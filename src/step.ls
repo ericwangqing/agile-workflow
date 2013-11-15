@@ -60,7 +60,7 @@ module.exports = class Step
         next-step.step.state = 'active'
         next-step.step.act!
 
-  marshal: ->
+  marshal: -> 
     marshalled-step = _.pick @, 'name', 'state', 'actTimes'
 
   

@@ -7,10 +7,13 @@ module.exports = class Engine
     done @
 
   start: (done)->
-    debug "LLLLLLLLLLLLLL"
-    (@workflows) <~! @store.retrieve-all-running-workflows
+    # 注意，目前我们将所有workflow装载入内存，将来要改善只加载pending和started的workflow，end的workflow在用户查询时，再加载。
+    (@workflows) <~! @store.retrieve-all-workflows
     done!
 
+  stop: (done)->
+    <~! @store.save-all-workflows @workflows
+    Workflow-store.con.drop-database done
 
   add: (workflow-def)-> #
     workflow = workflow-factory.create-workflow workflow-def

@@ -17,10 +17,15 @@
     }
     prototype.start = function(done){
       var this$ = this;
-      debug("LLLLLLLLLLLLLL");
-      return this.store.retrieveAllRunningWorkflows(function(workflows){
+      return this.store.retrieveAllWorkflows(function(workflows){
         this$.workflows = workflows;
         done();
+      });
+    };
+    prototype.stop = function(done){
+      var this$ = this;
+      return this.store.saveAllWorkflows(this.workflows, function(){
+        WorkflowStore.con.dropDatabase(done);
       });
     };
     prototype.add = function(workflowDef){

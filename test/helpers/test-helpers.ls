@@ -3,12 +3,24 @@ debug = require('debug')('aw')
 
 module.exports = 
 
-  create-engine: (done)->
+  create-engine: !(done)->
     new Engine db = null, !(@engine)~>
       utils.clean-db ~> 
       @engine.start done
 
+  destory-current-engine: !(done)->
+    @engine.stop !~>
+      @engine = null
+      @workflow = null
+      # debug "********* engine stop: engine: #{@engine}, workflow: #@workflow"
+      done!
 
+  recreate-engine-and-resume-workflow: !(wfid, done)->
+    (@engine) <~! new Engine db = null
+    <~! @engine.start
+    @workflow = @engine.get-workflow-by-id wfid
+    # @show-workflow!
+    done!
 
   load-workflow: (wf-name)->
     wfd = utils.load-fixture wf-name

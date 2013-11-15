@@ -1,6 +1,7 @@
 (function(){
-  var debug, Db, Server, MongoClient, Workflow, workflowFactory, storeCollectionName, mongo, WorkflowStore;
+  var debug, async, Db, Server, MongoClient, Workflow, workflowFactory, storeCollectionName, mongo, WorkflowStore;
   debug = require('debug')('aw');
+  async = require('async');
   Db = require('mongodb').Db;
   Server = require('mongodb').Server;
   MongoClient = require('mongodb').MongoClient;
@@ -40,27 +41,32 @@
     prototype.isMongoConnection = function(db){
       return !!db;
     };
-    prototype.retrieveAllRunningWorkflows = function(callback){
+    prototype.retrieveAllWorkflows = function(callback){
       if (!this.collection) {
         return callback([]);
       } else {
         return this.collection.find({}).toArray(function(err, results){
           var workflows, i$, len$, marshalledWorkflow, workflow;
-          debug("error: " + err);
           workflows = [];
-          debug("KKKKKKKKKKK " + results.length);
           for (i$ = 0, len$ = results.length; i$ < len$; ++i$) {
             marshalledWorkflow = results[i$];
             Workflow.unmarshal(marshalledWorkflow);
-            workflow = workflowFactory.createWorkflow(marshalledWorkflow.wfDef, marshalledWorkflow);
-            debug("^^^^^^^^^", workflow);
+            workflow = workflowFactory.resumeMarshalledWorkflow(marshalledWorkflow);
             workflows.push(workflow);
           }
           callback(workflows);
         });
       }
     };
-    prototype.saveWorkflow = function(marshalledWorkflow, done){
+    prototype.saveAllWorkflows = function(workflows, done){
+      var this$ = this;
+      return async.each(workflows, function(workflow, callback){
+        return this$.saveWorkflow(workflow, callback);
+      }, done);
+    };
+    prototype.saveWorkflow = function(workflow, done){
+      var marshalledWorkflow;
+      marshalledWorkflow = Workflow.marshal(workflow);
       return this.collection.update({
         _id: marshalledWorkflow.id
       }, marshalledWorkflow, {

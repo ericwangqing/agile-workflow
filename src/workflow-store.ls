@@ -1,4 +1,4 @@
-require! ['mongodb'.Db, 'mongodb'.Server, 'mongodb'.MongoClient, './Workflow', './workflow-factory']
+require! ['async', 'mongodb'.Db, 'mongodb'.Server, 'mongodb'.MongoClient, './Workflow', './workflow-factory']
 
 store-collection-name = 'workflow'
 mongo =
@@ -28,23 +28,31 @@ module.exports = class Workflow-store
   is-mongo-connection: (db)->
     !!db
 
-  retrieve-all-running-workflows: (callback)-> 
+  retrieve-all-workflows: (callback)-> 
     if not @collection
       callback [] 
     else
-      # _workflow-store.retrieve-all-running-workflows!
+      # _workflow-store.retrieve-all-workflows!
       (err, results) <-! @collection.find {} .to-array
-      debug "error: #err"
+      # debug "error: #err"
       workflows = []
-      debug "KKKKKKKKKKK #{results.length}"
+      # debug "KKKKKKKKKKK #{results.length}"
       for marshalled-workflow in results
         Workflow.unmarshal marshalled-workflow
-        workflow = workflow-factory.create-workflow marshalled-workflow.wf-def, marshalled-workflow
-        debug "^^^^^^^^^", workflow
+        workflow = workflow-factory.resume-marshalled-workflow marshalled-workflow
+        # debug "^^^^^^^^^", workflow
         workflows.push workflow
       callback workflows
 
-  save-workflow: (marshalled-workflow, done)->
+  save-all-workflows: (workflows, done)->
+    async.each workflows, (workflow, callback)~>
+      @save-workflow workflow, callback
+    , done
+
+  save-workflow: (workflow, done)->
+    # console.log "before workflow save"
+    marshalled-workflow = Workflow.marshal workflow
+    # debug "marshalled-workflow: ", marshalled-workflow 
     (error, results) <-! @collection.update {_id: marshalled-workflow.id}, marshalled-workflow, {upsert: true}
     done results if !!done
     # debug "save workflow after:  ", workflow
