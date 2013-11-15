@@ -7,7 +7,7 @@ describe '持久化测试', ->
 
   describe "多个start active step的工作流", (done)->
     can "执行两个start active的工作流: 'A + B = C （同时开始AB）'正常\n", (done)->
-      h.load-workflow 'a-plus-b-two-start-active-steps'
+      <-! h.load-workflow  'a-plus-b-two-start-active-steps'
       h.active-steps-should-be ['Get A', 'Get B']
 
       h.human-do 'Get A', {a: 2}
@@ -17,7 +17,7 @@ describe '持久化测试', ->
       wfid = h.workflow.id
       debug "------ to persist workflow: #{h.workflow}"
       <-! h.destory-current-engine
-      debug "------ workflow when engine destoried: #{h.workflow}"
+      debug "------ workflow when engine destoried: #{h.workflow}, wfid: #wfid"
       <-! h.recreate-engine-and-resume-workflow wfid
       debug "------ resumed workflow: #{h.workflow}"
       

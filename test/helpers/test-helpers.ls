@@ -22,10 +22,11 @@ module.exports =
     # @show-workflow!
     done!
 
-  load-workflow: (wf-name)->
+  load-workflow: (wf-name, done)->
     wfd = utils.load-fixture wf-name
-    @workflow = @engine.human-start wfd, resource = null
-    @show-workflow!
+    @engine.human-start wfd, !(@workflow)~>
+      @show-workflow!
+      done @workflow
 
   show-acting-step: !->
     @workflow.show-step-in-state 'acting'
@@ -62,8 +63,8 @@ module.exports =
         false
       @assert(is-in-acting-steps!, "not in current active steps")
 
-  test-workflow: !(wf-name, human-act-results, expected-step-sequence)->
-    @load-workflow wf-name
+  test-workflow: !(wf-name, human-act-results, expected-step-sequence, done)->
+    <~! @load-workflow wf-name
     @workflow.active-and-acting-steps![0].name.should.eql expected-step-sequence[0]
     @show-active-step!
 
@@ -76,4 +77,5 @@ module.exports =
         @workflow.active-steps!.length.should.eql 0
         @workflow.acting-steps!.length.should.eql 0
       @show-acting-step! 
+    done!
 

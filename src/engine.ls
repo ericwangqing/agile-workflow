@@ -15,18 +15,18 @@ module.exports = class Engine
     <~! @store.save-all-workflows @workflows
     Workflow-store.con.drop-database done
 
-  add: (workflow-def)-> #
+  add: (workflow-def, done)-> #
     workflow = workflow-factory.create-workflow workflow-def
     workflow.store = @store
     @workflows.push workflow
-    workflow.save!
-    workflow
+    workflow.save !->
+    done workflow
 
-  human-start: (workflow-def)-> # 人工启动工作流时，需要act一次，将active steps至于等候def-act，等待人工执行的结果
-    workflow = @add workflow-def
-    for active-step in workflow.active-steps!
-      active-step.act!
-    workflow
+  human-start: (workflow-def, done)-> # 人工启动工作流时，需要act一次，将active steps至于等候def-act，等待人工执行的结果
+    @add workflow-def, !(workflow)->
+      for active-step in workflow.active-steps!
+        active-step.act!
+      done workflow
 
   human-act-step: (wfid, step-name, human-act-result)->
     step = @get-step wfid, step-name

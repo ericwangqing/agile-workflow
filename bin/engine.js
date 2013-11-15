@@ -28,22 +28,23 @@
         WorkflowStore.con.dropDatabase(done);
       });
     };
-    prototype.add = function(workflowDef){
+    prototype.add = function(workflowDef, done){
       var workflow;
       workflow = workflowFactory.createWorkflow(workflowDef);
       workflow.store = this.store;
       this.workflows.push(workflow);
-      workflow.save();
-      return workflow;
+      workflow.save(function(){});
+      return done(workflow);
     };
-    prototype.humanStart = function(workflowDef){
-      var workflow, i$, ref$, len$, activeStep;
-      workflow = this.add(workflowDef);
-      for (i$ = 0, len$ = (ref$ = workflow.activeSteps()).length; i$ < len$; ++i$) {
-        activeStep = ref$[i$];
-        activeStep.act();
-      }
-      return workflow;
+    prototype.humanStart = function(workflowDef, done){
+      return this.add(workflowDef, function(workflow){
+        var i$, ref$, len$, activeStep;
+        for (i$ = 0, len$ = (ref$ = workflow.activeSteps()).length; i$ < len$; ++i$) {
+          activeStep = ref$[i$];
+          activeStep.act();
+        }
+        done(workflow);
+      });
     };
     prototype.humanActStep = function(wfid, stepName, humanActResult){
       var step, nextAct;
