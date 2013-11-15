@@ -23,10 +23,7 @@
       });
     };
     prototype.stop = function(done){
-      var this$ = this;
-      return this.store.saveAllWorkflows(this.workflows, function(){
-        WorkflowStore.con.dropDatabase(done);
-      });
+      return this.store.saveAllWorkflows(this.workflows, done);
     };
     prototype.add = function(workflowDef, done){
       var workflow;

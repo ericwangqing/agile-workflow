@@ -43,9 +43,11 @@ module.exports = class Workflow extends Step # 这样workflow就可以作为step
 
   is-going-to-end: (step)->
     !!step.is-end-step or (!step.next and @can-end!)
-
+   
   save: (done)->
-    @store.save-workflow @, done
+    @store.save-workflow @, !~>
+      debug "save workflow: #{@id} complete!"
+      done! 
 
   to-string: ->
     steps-strs = '\n\t' + ([''+ step for step in _.values @steps].join '\n\t') + '\n'

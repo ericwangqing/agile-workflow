@@ -7,3 +7,15 @@ debug = require('debug')('aw')
 
 can = it # it在LiveScript中被作为缺省的参数，因此我们先置换为can
 
+h = require './test-helpers'
+
+describe "----------------------------------" * 2 , ->
+  before-each !(done)->
+    # console.log "******** before each **********"
+    h.extend-should!
+    h.create-engine done
+
+  after-each !(done)->
+    # console.log "******** after each **********"
+    h.clean-db done                      
+       

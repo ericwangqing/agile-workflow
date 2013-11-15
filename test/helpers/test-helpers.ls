@@ -2,10 +2,12 @@ require! {should, async, _: underscore, './utils', '../bin/Engine'}
 debug = require('debug')('aw')
 
 module.exports = 
+  clean-db: !(done)->
+    (error, result) <~! @engine.store.collection.remove {} 
+    done!
 
   create-engine: !(done)->
     new Engine db = null, !(@engine)~>
-      utils.clean-db ~> 
       @engine.start done
 
   destory-current-engine: !(done)->
@@ -23,18 +25,21 @@ module.exports =
     (@engine) <~! new Engine db = null
     <~! @engine.start
     workflows = {}
-    for wfid in wfids
-      workflow = @engine.get-workflow-by-id wfid
-      @extend-workflow-for-test workflow
-      workflows[wfid] = workflow
-    # @show-workflow!
-    done workflows
+    if @engine.workflows.length >= wfids.length
+      for wfid in wfids
+        workflow = @engine.get-workflow-by-id wfid
+        @extend-workflow-for-test workflow
+        workflows[wfid] = workflow
+      # @show-workflow!
+      done workflows
+    else
+      throw new Error "can't get #{wfids} form engine, there are only #{@engine.workflows.length} in engine."
 
   load-workflow: (wf-name, done)->
     wfd = utils.load-fixture wf-name
     @engine.human-start wfd, !(workflow)~>
       @extend-workflow-for-test workflow
-      workflow.show!
+      # workflow.show!
       done workflow
 
   extend-workflow-for-test: (workflow)->

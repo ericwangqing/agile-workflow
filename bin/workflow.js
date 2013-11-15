@@ -91,7 +91,11 @@
       return !!step.isEndStep || (!step.next && this.canEnd());
     };
     prototype.save = function(done){
-      return this.store.saveWorkflow(this, done);
+      var this$ = this;
+      return this.store.saveWorkflow(this, function(){
+        debug("save workflow: " + this$.id + " complete!");
+        done();
+      });
     };
     prototype.toString = function(){
       var stepsStrs, step;

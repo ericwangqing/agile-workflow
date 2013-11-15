@@ -48,10 +48,6 @@
         return this.collection.find({}).toArray(function(err, results){
           var workflows, i$, len$, marshalledWorkflow, workflow;
           workflows = [];
-          if (results.length === 2) {
-            debug("KKKKKKKKKKK ", results[0].steps);
-            debug("KKKKKKKKKKK ", results[1].steps);
-          }
           for (i$ = 0, len$ = results.length; i$ < len$; ++i$) {
             marshalledWorkflow = results[i$];
             Workflow.unmarshal(marshalledWorkflow);
@@ -71,13 +67,11 @@
     prototype.saveWorkflow = function(workflow, done){
       var marshalledWorkflow;
       marshalledWorkflow = Workflow.marshal(workflow);
-      debug("marshalled-workflow: ", marshalledWorkflow);
       return this.collection.update({
         _id: marshalledWorkflow._id
       }, marshalledWorkflow, {
         upsert: true
       }, function(error, results){
-        debug("****************** saved");
         if (!!done) {
           done();
         }

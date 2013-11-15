@@ -30,10 +30,6 @@ load-fixture = (data-name)->
   eval require('fs').readFileSync(FIXTURE_PATH + data-name + '.js', {encoding: 'utf-8'}) 
 
 
-clean-db = !(done)->
-  # done!
-  Workflow-store.con.drop-database done
-  
 
 # prepare-clean-test-db = !(done)->
 #   locations = load-fixture "locations-in-db"
@@ -70,7 +66,7 @@ clean-db = !(done)->
 module.exports =
   All-done-waiter: All-done-waiter
   load-fixture: load-fixture
-  clean-db: clean-db
+  # clean-db: clean-db
   # open-clean-db-and-load-fixtures: open-clean-db-and-load-fixtures
   # prepare-clean-test-db: prepare-clean-test-db
   # close-db: close-db

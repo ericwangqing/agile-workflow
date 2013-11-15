@@ -12,8 +12,7 @@ module.exports = class Engine
     done!
 
   stop: (done)->
-    <~! @store.save-all-workflows @workflows
-    Workflow-store.con.drop-database done
+    @store.save-all-workflows @workflows, done
 
   add: (workflow-def, done)-> #
     workflow = workflow-factory.create-workflow workflow-def
