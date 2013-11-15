@@ -33,6 +33,9 @@
         return true;
       };
     }
+    prototype.humanDo = function(stepName, humanActResult){
+      return this.steps[stepName].deferAct(humanActResult);
+    };
     prototype.retryContextAwareSteps = function(){
       var i$, ref$, len$, step, ref1$, results$ = [];
       for (i$ = 0, len$ = (ref$ = this.contextAwareSteps()).length; i$ < len$; ++i$) {

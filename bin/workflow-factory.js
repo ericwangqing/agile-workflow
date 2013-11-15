@@ -106,6 +106,7 @@
     },
     resumeMarshalledWorkflow: function(marshalledWorkflow){
       var workflow;
+      marshalledWorkflow.wfDef.context = marshalledWorkflow.context;
       workflow = _createWorkflow(marshalledWorkflow.wfDef, marshalledWorkflow._id);
       restoreStepsState(workflow, marshalledWorkflow.steps);
       return workflow;

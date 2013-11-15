@@ -47,19 +47,9 @@
       });
     };
     prototype.humanActStep = function(wfid, stepName, humanActResult){
-      var step, nextAct;
-      step = this.getStep(wfid, stepName);
-      return nextAct = step.deferAct(humanActResult);
-    };
-    prototype.getStep = function(wfid, stepName){
-      var workflow, i$, ref$, len$, step;
+      var workflow;
       workflow = this.getWorkflowById(wfid);
-      for (i$ = 0, len$ = (ref$ = _.values(workflow.steps)).length; i$ < len$; ++i$) {
-        step = ref$[i$];
-        if (step.name === stepName) {
-          return step;
-        }
-      }
+      return workflow.humanDo(stepName, humanActResult);
     };
     prototype.getAllRunningWorkflow = function(){
       return this.queryWorkflow(function(){

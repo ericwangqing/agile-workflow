@@ -29,13 +29,8 @@ module.exports = class Engine
       done workflow
 
   human-act-step: (wfid, step-name, human-act-result)->
-    step = @get-step wfid, step-name
-    next-act = step.defer-act human-act-result
-
-  get-step: (wfid, step-name)->
     workflow = @get-workflow-by-id wfid
-    for step in _.values workflow.steps
-      return step if step.name is step-name
+    workflow.human-do step-name, human-act-result
 
   get-all-running-workflow: ->
     @query-workflow -> true

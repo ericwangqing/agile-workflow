@@ -55,6 +55,7 @@ module.exports =
     _create-workflow wf-def
 
   resume-marshalled-workflow: (marshalled-workflow)->
+    marshalled-workflow.wf-def.context = marshalled-workflow.context # 恢复context
     workflow = _create-workflow marshalled-workflow.wf-def, marshalled-workflow._id
     restore-steps-state workflow, marshalled-workflow.steps
     workflow

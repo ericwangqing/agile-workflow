@@ -19,6 +19,9 @@ module.exports = class Workflow extends Step # 这样workflow就可以作为step
     @can-act = @wf-def.can-act or -> true
     @can-end = @wf-def.can-end or -> true
 
+  human-do: (step-name, human-act-result)->
+    @steps[step-name].defer-act human-act-result
+
   retry-context-aware-steps: ->
     for step in @context-aware-steps!
       if step.state not in ['end', 'acting'] and step.can-act.apply step.context

@@ -36,7 +36,9 @@ module.exports = class Workflow-store
       (err, results) <-! @collection.find {} .to-array
       # debug "error: #err"
       workflows = []
-      # debug "KKKKKKKKKKK #{results.length}"
+      if results.length is 2
+        debug "KKKKKKKKKKK ", results[0].steps
+        debug "KKKKKKKKKKK ", results[1].steps
       for marshalled-workflow in results
         Workflow.unmarshal marshalled-workflow
         workflow = workflow-factory.resume-marshalled-workflow marshalled-workflow
@@ -52,7 +54,8 @@ module.exports = class Workflow-store
   save-workflow: (workflow, done)->
     # console.log "before workflow save"
     marshalled-workflow = Workflow.marshal workflow
-    # debug "marshalled-workflow: ", marshalled-workflow 
-    (error, results) <-! @collection.update {_id: marshalled-workflow.id}, marshalled-workflow, {upsert: true}
-    done results if !!done
+    debug "marshalled-workflow: ", marshalled-workflow 
+    (error, results) <-! @collection.update {_id: marshalled-workflow._id}, marshalled-workflow, {upsert: true}
+    debug "****************** saved"
+    done! if !!done
     # debug "save workflow after:  ", workflow

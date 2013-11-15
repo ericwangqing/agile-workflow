@@ -16,44 +16,51 @@ module.exports =
       done!
 
   recreate-engine-and-resume-workflow: !(wfid, done)->
+    (workflows) <-! @recreate-engine-and-resume-workflows [wfid]
+    done workflows[wfid]
+
+  recreate-engine-and-resume-workflows: !(wfids, done)->
     (@engine) <~! new Engine db = null
     <~! @engine.start
-    @workflow = @engine.get-workflow-by-id wfid
+    workflows = {}
+    for wfid in wfids
+      workflow = @engine.get-workflow-by-id wfid
+      @extend-workflow-for-test workflow
+      workflows[wfid] = workflow
     # @show-workflow!
-    done!
+    done workflows
 
   load-workflow: (wf-name, done)->
     wfd = utils.load-fixture wf-name
-    @engine.human-start wfd, !(@workflow)~>
-      @show-workflow!
-      done @workflow
+    @engine.human-start wfd, !(workflow)~>
+      @extend-workflow-for-test workflow
+      workflow.show!
+      done workflow
 
-  show-acting-step: !->
-    @workflow.show-step-in-state 'acting'
+  extend-workflow-for-test: (workflow)->
+    _.extend workflow, {
+      show-acting-step: !->
+        @show-step-in-state 'acting'
 
-  show-active-step: !->
-    @workflow.show-step-in-state 'active'
+      show-active-step: !->
+        @show-step-in-state 'active'
+     
+      show: !->
+        debug @
 
- 
-  show-workflow: !->
-    debug @workflow
+      acting-steps-should-be: (steps)->
+        @_steps-in-the-state-should-be steps, 'acting'
 
-  human-do: (step-name, human-act-result)->
-    @engine.human-act-step @workflow.id, step-name, human-act-result
+      active-steps-should-be: (steps)->
+        @_steps-in-the-state-should-be steps, 'active'
 
-  acting-steps-should-be: (steps)->
-    @_steps-in-the-state-should-be steps, 'acting'
+      active-and-acting-steps-should-be: (steps)->
+        @_steps-in-the-state-should-be steps, 'activeAndActing'
 
-  active-steps-should-be: (steps)->
-    @_steps-in-the-state-should-be steps, 'active'
-
-  active-and-acting-steps-should-be: (steps)->
-    @_steps-in-the-state-should-be steps, 'activeAndActing'
-
-  _steps-in-the-state-should-be: (steps, state)->
-    steps = [] <<< 0: steps if not _.is-array steps
-    [step.name for step in @workflow.[state + 'Steps']!].should.eql steps
-
+      _steps-in-the-state-should-be: (steps, state)->
+        steps = [] <<< 0: steps if not _.is-array steps
+        [step.name for step in @[state + 'Steps']!].should.eql steps
+    }
 
   extend-should: !->
     should.Assertion.prototype.in-acting-steps = ->
@@ -64,18 +71,18 @@ module.exports =
       @assert(is-in-acting-steps!, "not in current active steps")
 
   test-workflow: !(wf-name, human-act-results, expected-step-sequence, done)->
-    <~! @load-workflow wf-name
-    @workflow.active-and-acting-steps![0].name.should.eql expected-step-sequence[0]
-    @show-active-step!
+    (w) <~! @load-workflow wf-name
+    w.active-and-acting-steps![0].name.should.eql expected-step-sequence[0]
+    w.show-active-step!
 
     for i in [1 to expected-step-sequence.length]
-      @human-do @workflow.active-and-acting-steps![0].name, human-act-results[i - 1]
+      w.human-do w.active-and-acting-steps![0].name, human-act-results[i - 1]
       if i < expected-step-sequence.length
-        @active-and-acting-steps-should-be expected-step-sequence[i]
+        w.active-and-acting-steps-should-be expected-step-sequence[i]
         # expected-step-sequence[i].should.in-acting-steps!
       else # last step executed
-        @workflow.active-steps!.length.should.eql 0
-        @workflow.acting-steps!.length.should.eql 0
-      @show-acting-step! 
+        w.active-steps!.length.should.eql 0
+        w.acting-steps!.length.should.eql 0
+      w.show-acting-step! 
     done!
 
